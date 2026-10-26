@@ -1,0 +1,17 @@
+{% if history %}
+<section class="panel exam-history" id="exam-history" aria-labelledby="exam-history-title" tabindex="-1">
+  <div class="exam-history-heading"><h2 id="exam-history-title">같은 관리번호의 검사 이력</h2><a class="text-link" href="{{ history.close_url }}">이력 닫기</a></div>
+  {% if history.error %}<p role="alert">{{ history.error }}</p>{% else %}
+  <p>같은 관리번호로 조회한 기록입니다. 각 기록의 이름을 확인해 주세요.</p>
+  <p class="muted">관리번호 <strong>{{ history.reference }}</strong> · 최근 검사일순</p>
+  {% if history.rows %}
+  <div class="exam-history-table-wrap" role="region" aria-label="검사 이력 표" tabindex="0"><table class="exam-history-table">
+    <caption class="sr-only">관리번호 {{ history.reference }} 검사 이력</caption>
+    <thead><tr><th scope="col">검사 종류</th><th scope="col">이름</th><th scope="col">관리번호</th><th scope="col">검사일</th><th scope="col">검사</th></tr></thead>
+    <tbody>{% for entry in history.rows %}<tr><td>{{ entry.kind }}</td><td>{{ entry.name or '미입력' }}</td><td>{{ entry.reference }}</td><td>{{ entry.exam_date or '미입력' }}</td><td><a class="text-link" href="{{ url_for('final_report.show',report_id=entry.id) if entry.kind == 'TCI' else url_for('khtp.workspace',id=entry.id) }}" aria-label="{{ entry.kind }} {{ entry.name or entry.reference }} {{ entry.exam_date or '검사일 미입력' }} 열기">열기</a></td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<p>이 페이지에는 검사 기록이 없습니다. 이전 페이지로 이동해 주세요.</p>{% endif %}
+  <nav class="exam-history-pagination" aria-label="검사 이력 페이지">{% if history.previous_url %}<a class="button secondary small" href="{{ history.previous_url }}">이전</a>{% endif %}<span>{{ history.page }} 페이지</span>{% if history.next_url %}<a class="button secondary small" href="{{ history.next_url }}">다음</a>{% endif %}</nav>
+  {% endif %}
+</section>
+{% endif %}

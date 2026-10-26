@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}K-HTP 관찰 기록{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static',filename='khtp.css') }}">
+<script src="{{ url_for('static',filename='khtp.js') }}" defer></script>
+{% endblock %}
+{% block content %}
+<main class="page khtp-page" data-csrf="{{ csrf }}" data-today="{{ today }}" data-job-id="{{ job_id }}">
+  <p><a href="{{ url_for('khtp.index') }}">검사 목록</a></p>
+  <div class="page-heading khtp-heading"><div><div class="eyebrow">그림에서 보이는 표현을 기록합니다</div><h1>K-HTP 관찰 기록</h1><p class="muted">그림 올리기 → 관찰표 확인·수정 → PDF</p></div><button type="button" id="khtp-pdf" class="button primary" hidden>PDF 받기</button></div>
+  <p id="khtp-status" class="khtp-status" role="status" aria-live="polite" tabindex="-1">현재 작업을 불러오는 중입니다.</p>
+  <section class="panel input-panel khtp-subject" aria-labelledby="khtp-subject-heading">
+    <div class="panel-heading"><h2 id="khtp-subject-heading">대상 정보</h2><span class="quiet-label">이름 또는 관리번호 입력</span></div>
+    <div class="khtp-subject-fields">
+      <label for="khtp-name">이름<input id="khtp-name" name="name" maxlength="100" placeholder="검사 대상자 이름" autocomplete="off"></label>
+      <label for="khtp-reference">관리번호 <span class="optional">선택</span><input id="khtp-reference" name="reference" maxlength="100" placeholder="예: KHTP-001" autocomplete="off"></label>
+      <label for="khtp-exam_date">검사일<input id="khtp-exam_date" name="exam_date" type="date" value="{{ today }}"></label>
+    </div>
+  </section>
+  <section id="khtp-upload" class="khtp-upload"><h2>그림 한 장을 올려 주세요</h2><p>JPEG·PNG, 20MB 이하. 그림은 외부로 전송하지 않습니다.</p><label for="khtp-file" class="button">그림 선택</label><input id="khtp-file" type="file" accept="image/jpeg,image/png"><div id="khtp-file-preview" hidden><img alt="선택한 그림 미리보기"><p id="khtp-filename"></p><button class="button primary" id="khtp-start" type="button">분석하기</button></div></section>
+  <section id="khtp-work" class="khtp-work" hidden>
+    <aside class="khtp-drawing"><div class="khtp-toolbar"><h2>그림</h2><button type="button" class="button small" id="khtp-zoom">확대 보기</button></div><div class="khtp-canvas" id="khtp-canvas"><svg id="khtp-svg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="업로드한 그림과 선택한 관찰 근거"></svg></div><p id="khtp-region-caption" class="muted">관찰표의 ‘근거 영역’을 누르면 그림에 표시됩니다.</p><p class="khtp-disclaimer">자동 초안은 확인할 후보입니다. 개수·성별·관계나 심리 상태를 확정하지 않습니다.</p></aside>
+    <div class="khtp-observations"><div class="khtp-toolbar"><h2>관찰표</h2><button type="button" class="button small" id="khtp-expand">전체 항목 보기</button></div><p class="muted">그룹 제목을 누르면 상태와 내용을 수정할 수 있습니다. 필요한 부분만 수정하세요. 미확인 항목이 있어도 PDF를 받을 수 있습니다.</p><div id="khtp-groups"></div><p id="khtp-status-bottom" class="khtp-status" tabindex="-1"></p><div class="khtp-toolbar khtp-save-tools"><button type="button" class="button primary" id="khtp-pdf-bottom">PDF 받기</button><button type="button" class="button" id="khtp-save">수정 저장</button><button type="button" class="button" id="khtp-analyze">다시 분석</button><button type="button" class="button" id="khtp-new">다른 그림으로 시작</button></div><p class="muted">PDF 받기를 누르면 현재 수정 내용이 함께 저장됩니다. 저장한 그림과 관찰 내용은 검사 목록에서 계속 다시 열 수 있습니다.</p></div>
+  </section>
+  <details id="khtp-sources" class="khtp-sources" hidden><summary>관련 자료와 사진으로 판단할 수 없는 내용</summary><div id="khtp-source-content"></div></details>
+  <noscript><p>관찰표 편집과 PDF를 사용하려면 JavaScript를 켜 주세요.</p></noscript>
+</main>
+{% endblock %}

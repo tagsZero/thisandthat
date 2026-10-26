@@ -1,0 +1,15 @@
+﻿{% extends 'base.html' %}
+{% from 'library_fields.html' import field %}
+{% block title %}소스 편집{% endblock %}
+{% block content %}
+<main class="page library-editor"><a class="breadcrumb" href="{{ url_for('library.index') }}">← 자료 관리</a><h1>소스 편집</h1>
+<form method="post" class="panel library-form">
+{% if errors %}<div class="flash error" role="alert">입력 내용을 확인해 주세요. 저장하지 않았습니다.</div>{% endif %}
+{% for name, label, multiline in [('title','소스 제목',false),('author','저자·전문가 (미확인 시 빈칸)',false),('perspective','관점 설명',true),('filename','원본 파일명',false),('alternate_filename','대체 형식 파일명',false)] %}{{ field(name,label,form,errors,multiline,required=name in ['title','filename']) }}{% endfor %}
+{{ field('edition','검사판',form,errors,options=editions,required=true) }}
+{{ field('scope','적용 범위와 확인 근거',form,errors,true,required=true) }}
+{{ field('active','사용 여부',form,errors,options={'1':'사용 중','0':'사용 중지'}) }}
+<p class="muted">소스를 중지해도 개별 해석의 사용 여부는 유지됩니다. 다시 사용하면 기존 개별 상태를 따릅니다.</p>
+<div class="library-actions"><a class="button secondary" href="{{ url_for('library.index') }}">목록으로</a><button class="button primary" type="submit">소스 저장</button></div>
+</form></main>
+{% endblock %}

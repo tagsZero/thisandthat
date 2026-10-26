@@ -1,0 +1,25 @@
+<div class="review-types"><div><small>기질유형</small><strong>{{ report.types.temperament or '미입력' }}</strong></div><div><small>성격유형</small><strong>{{ report.types.character or '미입력' }}</strong></div></div>
+<p class="criteria-note">T점수 기준: 낮음 {{ report.settings.low }} 이하 · 높음 {{ report.settings.high }} 이상 · {{ {'none':'반올림 없음', 'integer':'정수 반올림', 'one_decimal':'소수 첫째 자리 반올림'}.get(report.settings.rounding, report.settings.rounding) }}</p>
+{% for code, name, group in scales %}{% set override = report.settings.get('overrides', {}).get(code) %}{% if override %}<p class="criteria-note">{{ code }} 예외: 낮음 {{ override.low }} 이하 · 높음 {{ override.high }} 이상</p>{% endif %}{% endfor %}
+<div class="table-scroll"><table class="score-summary"><thead><tr><th>척도</th><th>원점수</th><th>원본 T점수</th><th>백분위</th><th>분류 적용값</th><th>분류</th></tr></thead><tbody>{% for code, name, group in scales %}{% set score = report.scores.get(code, {}) %}<tr><th>{{ name }} <span>{{ code }}</span></th>{% for field in ('raw', 't', 'percentile') %}<td>{{ score.get(field) if score.get(field) is not none and score.get(field) != '' else '—' }}</td>{% endfor %}<td>{{ report.types.applied[code] if report.types.changed[code] else '—' }}</td><td><span class="grade grade-{{ report.types.grades[code] or 'empty' }}">{{ report.types.grades[code] or '—' }}</span></td></tr>{% endfor %}</tbody></table></div>
+<p class="criteria-note">분류 적용값은 반올림으로 원본 T점수와 달라진 경우에만 표시합니다.</p>
+{% set extra = namespace(present=false) %}
+{% set sc = report.scores.get('SC', {}) %}
+{% for value in sc.values() %}{% if value is not none and value != '' %}{% set extra.present = true %}{% endif %}{% endfor %}
+{% for items in subscales.values() %}{% for code, label in items %}{% set value = report.scores.get('subscales', {}).get(code, {}).get('raw') %}{% if value is not none and value != '' %}{% set extra.present = true %}{% endif %}{% endfor %}{% endfor %}
+{% if extra.present %}
+<details class="additional-review">
+  <summary>추가 점수 · 하위척도·SC</summary>
+  <p class="settings-note">입력된 개인 점수입니다. 추가 점수에는 주척도 분류 기준·반올림을 적용하지 않습니다.</p>
+  {% if sc.values()|reject('none')|reject('equalto', '')|list %}
+  <div class="table-scroll"><table class="score-summary sc-summary"><caption>SC 자율성+연대감</caption><thead><tr><th>척도</th><th>원점수</th><th>T점수</th><th>백분위</th></tr></thead><tbody><tr><th>SC</th>{% for field in ('raw', 't', 'percentile') %}<td>{{ sc.get(field) if sc.get(field) is not none and sc.get(field) != '' else '—' }}</td>{% endfor %}</tr></tbody></table></div>
+  {% endif %}
+  <div class="subscale-review-grid">{% for parent, name, group in scales %}{% set rows = namespace(present=false) %}
+    {% for code, label in subscales[parent] %}{% set value = report.scores.get('subscales', {}).get(code, {}).get('raw') %}{% if value is not none and value != '' %}{% set rows.present = true %}{% endif %}{% endfor %}
+    {% if rows.present %}<table class="subscale-summary"><caption>{{ group }} · {{ parent }} {{ name }}</caption><thead><tr><th>하위척도</th><th>원점수</th></tr></thead><tbody>
+      {% for code, label in subscales[parent] %}{% set value = report.scores.get('subscales', {}).get(code, {}).get('raw') %}{% if value is not none and value != '' %}<tr><th>{{ code }} {{ label }}</th><td>{{ value }}</td></tr>{% endif %}{% endfor %}
+    </tbody></table>{% endif %}
+  {% endfor %}</div>
+</details>
+{% endif %}
+{% if report.composition_view is defined %}{% include 'composition_review.html' %}{% elif report.body %}<div class="saved-body"><h3>저장된 해석</h3><p>{{ report.body[:500] }}</p></div>{% endif %}

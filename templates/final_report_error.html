@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}보고서 확인 필요{% endblock %}
+{% block content %}<main class="page form-page"><h1>보고서를 확인해 주세요</h1>
+<p role="status" data-save-state="{{ save_state }}">{{ message }}</p>
+{% if session_expired %}<p><a href="{{ url_for('auth.login') }}" target="_blank" rel="noopener">다른 탭에서 로그인</a></p>{% endif %}
+<p><a class="button secondary" href="{{ request.path }}">저장된 보고서 다시 읽기</a></p>
+{% if options is not none %}<form method="post" class="report-options panel"><p>제출한 표시 설정</p>
+{% for key, label in [('subscales','하위척도 상세'),('combined','기질·성격 연계해석'),('summary','종합 소견')] %}
+<label><input type="checkbox" name="include_{{ key }}" value="1" {% if options[key] %}checked{% endif %}>{{ label }}</label>{% endfor %}
+<button class="button secondary" name="action" value="preview">표시 미리보기 재시도</button>
+<button class="button primary" name="action" value="save_output">표시 설정 저장 재시도</button></form>{% endif %}
+<p><a href="{{ url_for('web.dashboard') }}">TCI 대시보드</a></p></main>{% endblock %}

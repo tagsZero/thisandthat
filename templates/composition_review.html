@@ -1,0 +1,5 @@
+<div class="saved-composition"><h3>저장된 해석·직접 의견</h3>
+{% for key, section in report.composition_view.sections.items() %}{% if section.blocks or section.opinion %}<div><h4>{{ composition_sections[key] }}</h4>
+{% for block in section.blocks %}{% set flags = report.block_status.get(block.id, {}) %}<p class="candidate-meta">{{ '추가 참고 · ' if flags.reference }}{{ '이전 기준에서 선택 · ' if flags.previous }}{{ '자료 변경 또는 사용 불가' if flags.changed }}</p><p>{{ block.text[:300] }}{{ '…' if block.text|length > 300 }}</p>{% endfor %}
+{% if section.opinion %}<p>직접 의견: {{ section.opinion[:300] }}{{ '…' if section.opinion|length > 300 }}</p>{% endif %}</div>{% endif %}{% endfor %}
+<a class="text-link" href="{{ url_for('final_report.show', report_id=report.id) }}">보고서 보기</a> · <a class="text-link" href="{{ url_for('candidates.index', report_id=report.id) }}">해석 이어 작성</a></div>

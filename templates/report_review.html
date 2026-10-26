@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block title %}검사 결과 리뷰{% endblock %}
+{% block content %}
+<main class="page form-page"><a class="breadcrumb" href="{{ url_for('web.dashboard') }}">{{ icon('back', 16) }} TCI 대시보드</a><div class="page-heading"><div><div class="eyebrow">TCI-RS · 검사 결과 리뷰</div><h1>{{ report.name or report.reference }}</h1><p class="muted">{{ report.reference if report.name and report.reference else 'TCI-RS' }} <span class="inline-divider">/</span> 검사일 {{ report.exam_date or '미입력' }}</p></div><a class="button primary" href="{{ url_for('candidates.index', report_id=report.id) }}">{{ icon('edit', 17) }} 이어 작성</a></div><p class="candidate-actions"><a class="button secondary" href="{{ url_for('candidates.index', report_id=report.id) }}">해석 보기</a></p><section class="panel review-panel">{% include 'score_summary.html' %}<div class="panel-footnote">{{ icon('clock', 15) }} 최근 저장 {{ report.updated_at|local_datetime }}</div></section></main>
+{% endblock %}

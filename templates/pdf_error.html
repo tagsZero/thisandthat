@@ -1,0 +1,8 @@
+{% extends 'base.html' %}{% block content %}<main class="page form-page">
+<h1>PDF 다운로드를 완료하지 못했습니다</h1><p role="status" data-save-state="{{ save_state }}">{{ message }}</p>
+{% if save_state == 'saved' %}<p>PDF만 다시 시도하면 수정 시각을 변경하지 않습니다. 다른 편집이 저장됐다면 현재 저장 내용을 출력합니다.</p><a class="button primary" href="{{ retry_url }}">저장된 보고서 PDF만 재시도</a>{% endif %}
+<p><a href="{{ url_for('auth.login') }}" target="_blank" rel="noopener">다른 탭에서 로그인</a> · <a href="{{ url_for('final_report.show', report_id=request.view_args.report_id) }}">보고서 열기</a></p>
+{% if recovery is not none %}<form method="post"><p>제출한 설정을 보관했습니다. 수정 후 다시 제출할 수 있습니다.</p>
+{% for key in ['subscales','combined','summary'] %}<label><input type="checkbox" name="include_{{ key }}" value="1" {% if recovery.get('include_' ~ key) == '1' %}checked{% endif %}>{{ composition_sections[key] }}</label>{% endfor %}
+<button class="button primary">저장 후 PDF 다운로드 재시도</button></form>{% endif %}
+</main>{% endblock %}

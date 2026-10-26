@@ -1,0 +1,10 @@
+{% from 'candidate_card.html' import card_view with context %}
+<div class="candidate-overview"><h2>관련 설명 탐색</h2><p>일반 일치 {{ match_count }}개 · 추가 참고 {{ reference_count }}개. 주제 연결과 개인 조건 충족은 별도로 확인합니다. 동일 문장의 여러 출처는 함께 표시합니다.</p></div>
+{% for topic in topic_sections %}
+<section class="topic-panel" data-topic="{{ topic.key }}" data-topic-view="{{ topic.view }}" data-current="{{ 'true' if topic.current else 'false' }}">
+<h2>{{ topic.label }}</h2><p class="settings-note">{{ topic.relevance }}</p>
+{% if topic.subscale %}<p class="reference-note">입력 원점수 {{ topic.raw if topic.raw not in (none,'') else '미입력' }} · 개인 규준 대비 위치 미확인. 주척도 T기준을 적용하지 않습니다.</p>{% endif %}
+{% if not topic.cards %}<div class="candidate-empty"><p>이 주제에 등록된 해석 없음</p><a href="#composition-editor">선택 내용에서 직접 의견 작성</a></div>{% endif %}
+{% for card in topic.cards[:3] %}{{ card_view(card, card.members|selectattr('category','equalto','reference')|list|length > 0, topic.key) }}{% endfor %}
+{% if topic.cards|length > 3 %}<details class="candidate-more"><summary>더 보기 · 나머지 {{ topic.cards|length - 3 }}개</summary>{% for card in topic.cards[3:] %}{{ card_view(card, card.members|selectattr('category','equalto','reference')|list|length > 0, topic.key) }}{% endfor %}</details>{% endif %}
+</section>{% endfor %}

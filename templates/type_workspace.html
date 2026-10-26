@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% from 'candidates.html' import boundary with context %}
+{% block title %}통합 해석 보고서{% endblock %}
+{% block content %}
+<main class="page candidate-page type-page">
+{% with step=2 %}{% include 'report_steps.html' %}{% endwith %}
+<div class="page-heading"><div><div class="eyebrow">02 · 통합 해석 보고서</div><h1>{{ report.name or report.reference }}</h1><p class="muted">검사일 {{ report.exam_date or '미입력' }} · 성인 TCI-RS</p></div></div>
+<form method="post" action="{{ url_for('candidates.index', report_id=report.id) }}" data-type-form>
+<input type="hidden" name="type_workspace" value="1">
+<input type="hidden" name="composition" id="composition-data" value='{{ composition|tojson }}'>
+<input type="hidden" name="type_context" value="{{ draft_context }}">
+<div class="workspace-layout-controls" data-layout-controls hidden><span>화면 배치</span><button type="button" data-layout="left" aria-pressed="true">좌측 프로파일</button><button type="button" data-layout="top" aria-pressed="false">상단 프로파일</button></div>
+<div class="profile-workspace" data-workspace data-layout="left">
+<aside class="workspace-context">
+    <div class="panel candidate-controls">
+    <input type="hidden" name="compare" value="1">
+    <div class="candidate-toolbar"><label class="inline-label">T점수 분류 기준<select name="preset" aria-label="T점수 분류 기준"><option value="t56" {% if preset == 't56' %}selected{% endif %}>T56 · 45/56</option><option value="t55" {% if preset == 't55' %}selected{% endif %}>T55 · 45/55</option><option value="custom" {% if preset == 'custom' %}selected{% endif %}>사용자 지정</option></select></label>
+      <button class="button secondary small" type="submit" name="action" value="compare">기준 적용 · 다시 시도</button>
+    </div>
+    <span class="field-error" data-error-for="preset">{{ errors.get('preset', '') }}</span>
+    <details class="classification-settings" {% if errors %}open{% endif %}><summary>상세 분류 설정 · 공통 경계, 반올림, 척도별 예외</summary>
+      <div class="settings-fields">{{ boundary('low', '공통 낮음 종료값 (이하 L)', (input_settings|default(report.settings)).low) }}{{ boundary('high', '공통 높음 시작값 (이상 H)', (input_settings|default(report.settings)).high) }}
+        <label>분류 적용값 반올림<select name="rounding" aria-label="분류 적용값 반올림">{% for value, label in [('none', '없음'), ('one_decimal', '소수 첫째 자리 · 사사오입'), ('integer', '정수 · 사사오입')] %}<option value="{{ value }}" {% if (input_settings|default(report.settings)).rounding == value %}selected{% endif %}>{{ label }}</option>{% endfor %}{% if errors.rounding %}<option selected value="{{ (input_settings|default(report.settings)).rounding }}">{{ (input_settings|default(report.settings)).rounding }}</option>{% endif %}</select><span class="field-error" data-error-for="rounding">{{ errors.get('rounding', '') }}</span></label>
+      </div>
+      <p class="settings-note">두 경계 사이는 M입니다. 원본 점수는 유지하며 조회·비교는 저장하지 않습니다.</p>
+      <div class="table-scroll"><table class="override-table"><thead><tr><th>척도별 예외 사용</th><th>낮음 종료값</th><th>높음 시작값</th></tr></thead><tbody>{% for code, name, group in scales %}{% set override = (input_settings|default(report.settings)).get('overrides', {}).get(code) %}
+        <tr><th><label><input type="checkbox" name="{{ code }}_override" value="1" {% if override is not none %}checked{% endif %}> {{ code }} {{ name }}</label></th><td>{{ boundary(code ~ '_low', code ~ ' 낮음 종료값', override.low if override else '') }}</td><td>{{ boundary(code ~ '_high', code ~ ' 높음 시작값', override.high if override else '') }}</td></tr>
+      {% endfor %}</tbody></table></div>
+    </details>
+  </div>
+<p class="candidate-status" id="candidate-status" role="status">{{ '입력 기준과 표시 결과가 다릅니다. 마지막 유효 결과를 유지합니다.' if errors else '현재 T기준과 입력 백분위를 표시합니다.' }}</p>
+<div class="panel workspace-profile" id="workspace-profile">{% include 'workspace_profile.html' %}</div>
+</aside>
+<section class="workspace-interpretations" aria-label="기질·성격 통합 설명">
+<p class="settings-note">{{ '제공 자료 기반 통합 설명은 현재 유형과 조건에 맞춰 자동으로 포함됩니다. 필요한 다른 해석만 추가하고 본문을 직접 다듬으세요.' if is_fresh else '저장된 본문을 열었습니다. 편집하거나 비워 둔 내용은 그대로 유지합니다.' }}</p>
+<div class="panel composition-editor type-editor" id="composition-editor">{% include 'type_body.html' %}</div>
+</section></div>
+<div class="workspace-savebar">
+{% if errors.get('composition') %}<p class="field-error">{{ errors.composition }}</p>{% endif %}
+<p id="save-status" role="status">{{ '미저장 · 현재 해석과 기준을 확인해 주세요.' if is_fresh else '저장된 내용을 열었습니다.' }}</p>
+<p class="settings-note" id="last-saved">최근 저장: <time datetime="{{ report.updated_at.isoformat() }}">{{ report.updated_at.isoformat() }}</time></p>
+<div class="composition-actions"><button class="button primary" name="action" value="report">저장하고 보고서 보기</button><button class="button secondary" name="action" value="pdf">저장 후 PDF 다운로드</button><button class="button secondary" name="action" value="save">현재 해석·기준 저장</button><button class="button secondary" name="action" value="edit">저장하고 점수 편집</button><button class="button secondary" name="action" value="dashboard">저장하고 대시보드</button></div>
+</div>
+<noscript><p>본문 편집·기준 적용·저장은 사용할 수 있습니다. 배치 전환과 다른 해석 추가·취소는 JavaScript를 켜 주세요.</p></noscript>
+</form>
+<script id="type-initial" type="application/json">{{ dict(fresh=is_fresh, valid=not errors, flags=block_status, settings=valid_settings, scores=report.scores)|tojson }}</script>
+</main>
+<script src="{{ url_for('static', filename='pdf_download.js') }}" defer></script>
+<script src="{{ url_for('static', filename='type_workspace.js') }}" defer></script>
+<script src="{{ url_for('static', filename='workspace.js') }}" defer></script>
+{% endblock %}

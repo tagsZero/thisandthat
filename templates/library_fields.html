@@ -1,0 +1,24 @@
+﻿{% macro field(name, label, form, errors, multiline=false, options=none, required=false) %}
+<label for="{{ name }}">{{ label }}{% if required %} <span class="muted">필수</span>{% endif %}</label>
+{% if options is not none %}
+<select id="{{ name }}" name="{{ name }}" {% if errors.get(name) %}aria-invalid="true" aria-describedby="error-{{ name }}"{% endif %}>
+  <option value="">선택 안 함</option>
+  {% if form.get(name, '') and form.get(name) not in options %}<option value="{{ form.get(name) }}" selected>{{ form.get(name) }} (확인 필요)</option>{% endif %}
+  {% for value, text in options.items() %}<option value="{{ value }}" {% if form.get(name, '')|string == value|string %}selected{% endif %}>{{ text }}</option>{% endfor %}
+</select>
+{% elif multiline %}<textarea id="{{ name }}" name="{{ name }}" rows="4" {% if errors.get(name) %}aria-invalid="true" aria-describedby="error-{{ name }}"{% endif %}>{{ form.get(name, '') }}</textarea>
+{% else %}<input id="{{ name }}" name="{{ name }}" value="{{ form.get(name, '') }}" {% if errors.get(name) %}aria-invalid="true" aria-describedby="error-{{ name }}"{% endif %}>
+{% endif %}
+{% if errors.get(name) %}<p class="field-error" id="error-{{ name }}">{{ errors[name] }}</p>{% endif %}
+{% endmacro %}
+{% macro numeric(row, scale_options, metrics) %}
+<div class="numeric-rule">
+  <label>대상 척도<select name="numeric_scale"><option value="">척도 선택</option>{% if row.get('scale') and row.scale not in scale_options %}<option selected value="{{ row.scale }}">{{ row.scale }} (확인 필요)</option>{% endif %}{% for code, label in scale_options.items() %}<option value="{{ code }}" {% if row.get('scale') == code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+  <label>점수 종류<select name="numeric_metric">{% if row.get('metric') and row.metric not in metrics %}<option selected value="{{ row.metric }}">{{ row.metric }} (확인 필요)</option>{% endif %}{% for code, label in metrics.items() %}<option value="{{ code }}" {% if row.get('metric') == code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+  <label>하한<input name="numeric_lower" inputmode="decimal" value="{{ row.get('lower', '') }}"></label>
+  <label>하한 포함<select name="numeric_lower_inclusive">{% if 'lower_inclusive' in row and row['lower_inclusive'] not in ['0','1'] %}<option selected value="{{ row['lower_inclusive'] }}">{{ row['lower_inclusive'] }} (확인 필요)</option>{% endif %}<option value="0" {% if row.get('lower_inclusive') == '0' %}selected{% endif %}>제외 (초과)</option><option value="1" {% if row.get('lower_inclusive', '1') == '1' %}selected{% endif %}>포함 (이상)</option></select></label>
+  <label>상한<input name="numeric_upper" inputmode="decimal" value="{{ row.get('upper', '') }}"></label>
+  <label>상한 포함<select name="numeric_upper_inclusive">{% if 'upper_inclusive' in row and row['upper_inclusive'] not in ['0','1'] %}<option selected value="{{ row['upper_inclusive'] }}">{{ row['upper_inclusive'] }} (확인 필요)</option>{% endif %}<option value="0" {% if row.get('upper_inclusive') == '0' %}selected{% endif %}>제외 (미만)</option><option value="1" {% if row.get('upper_inclusive', '1') == '1' %}selected{% endif %}>포함 (이하)</option></select></label>
+  <button class="button secondary small remove-rule" type="button">조건 삭제</button>
+</div>
+{% endmacro %}

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<main class="page form-page">
+  <h1>작성 내용을 보관하고 있습니다</h1>
+  <p role="status" data-save-state="{{ save_state|default('not_saved') }}">{{ message }}</p>
+  {% if save_state is not defined %}<p><a href="{{ url_for('auth.login') }}" target="_blank" rel="noopener">다른 탭에서 로그인</a></p>{% endif %}
+  {% if recovery is not none %}
+  <form method="post" class="library-form panel">
+    <div class="composition-actions">
+      {% if pdf_retry %}<button class="button primary" name="action" value="pdf">저장 후 PDF 다운로드 재시도</button>{% endif %}
+      <button class="button secondary" name="action" value="compare">입력 유지하고 비교 화면 다시 열기</button>
+      {% if save_state|default('not_saved') != 'saved' %}<button class="button primary" name="action" value="save">현재 해석·기준 저장 재시도</button>{% endif %}
+    </div>
+    {% for key in recovery %}{% for value in recovery.getlist(key) %}{% if key != 'action' %}
+      {% if save_state is defined and not key.startswith('text_') and not key.startswith('opinion_') %}
+        <input type="hidden" name="{{ key }}" value="{{ value }}">
+      {% else %}
+        <label>{{ ('편집문' if key.startswith('text_') else composition_sections.get(key[8:], '직접 의견') ~ ' · 직접 의견') if save_state is defined else key }}<textarea name="{{ key }}" rows="3">{{ value }}</textarea></label>
+      {% endif %}
+    {% endif %}{% endfor %}{% endfor %}
+  </form>
+  {% else %}<p><a href="{{ request.path }}">해석 화면 다시 열기</a></p>{% endif %}
+</main>
+{% endblock %}

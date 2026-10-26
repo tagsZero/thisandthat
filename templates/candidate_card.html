@@ -1,0 +1,22 @@
+{% macro card_view(card, reference, topic_key="all") -%}
+<article class="candidate-card" id="{{ card.anchor }}-{{ topic_key }}">
+  <div class="candidate-meta">{{ '추가 참고' if reference else '제공 자료 기반 통합 설명' if card.members|selectattr('provided_draft')|list else '일반 일치' }}{% if card.members|length > 1 %} · 동일 설명 · 자료 항목 {{ card.members|length }}개{% endif %}</div>
+  {% if card.offer %}<button class="button secondary small candidate-select" type="submit" name="action" value="select:{{ card.offer.token }}" aria-pressed="{{ 'true' if card.selected else 'false' }}" data-offer='{{ card.offer|tojson }}'>{{ '선택됨 · 해제' if card.selected else '선택' }}</button>{% endif %}
+  <p class="candidate-description">{{ card.description }}</p>
+  {% for member in card.members %}{% set item = member.item %}{% set source = member.source %}
+    <div class="candidate-member"><h3>{{ item.title }}</h3><p class="candidate-meta">{{ item.perspective }} · {{ item.related_scales|join(' · ') }}{% if item.related_type %} · {{ families.get(item.related_type.family, item.related_type.family) }} {{ item.related_type.code }}{% endif %}</p>
+      <p class="candidate-source">출처: {{ source.title }}{% if source.author %} · {{ source.author }}{% endif %} · 항목 #{{ item.id }}</p>
+      {% if member.general %}<p class="settings-note">해당 검사판의 일반 설명 · 개인 점수 조건 없음</p>{% endif %}
+      {% if member.reasons %}<ul class="candidate-reasons">{% for reason in member.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>{% endif %}
+      {% for note in member.get('notes', []) %}<p class="settings-note">{{ note }}</p>{% endfor %}
+      {% if item.selection %}<p class="candidate-meta">{{ relations[item.selection.relation] }} · 선택 묶음 {{ item.selection.group }}</p><p class="settings-note">원문 대조 근거: {{ item.selection.basis }}</p>{% else %}<p class="settings-note">설명 관계·선택 묶음 미확인 · 자동 교체 대상 제외</p>{% endif %}
+      {% if item.group_key %}<p class="candidate-meta">유사 설명 묶음: {{ item.group_key }}</p>{% endif %}
+      {% if item.conflict %}<p class="candidate-conflict">상충 표시: {{ item.conflict }}</p>{% endif %}
+      <details class="candidate-original"><summary>원문·출처·적용 조건과 판정 이유</summary>
+        <dl><dt>검사판</dt><dd>항목 {{ editions.get(item.edition, '확인 필요') }} / 소스 {{ editions.get(source.edition, '확인 필요') }}</dd><dt>항목 적용 범위</dt><dd>{{ item.scope }}</dd><dt>소스 적용 범위</dt><dd>{{ source.scope }}</dd><dt>원문 위치</dt><dd>{{ item.location }}</dd><dt>파일</dt><dd>{{ source.filename }}{% if source.alternate_filename %} / 대체 {{ source.alternate_filename }}{% endif %}</dd><dt>원래 분류 기준</dt><dd>{{ item.original_criteria }}</dd><dt>원문</dt><dd class="candidate-quotation">{{ item.original }}</dd><dt>조건별 판정 · 모두 충족 (AND)</dt><dd><ul>{% for check in member.checks %}<li>{{ '충족' if check.matched else '불충족/확인 필요' }} · {{ check.message }}</li>{% else %}<li>점수 조건 절 없음 · 연결 척도/유형은 설명용 메타데이터입니다.</li>{% endfor %}</ul></dd></dl>
+      </details>
+    </div>
+  {% endfor %}
+  {% if card.similar %}<div class="candidate-similar">같은 묶음의 다른 설명 비교: {% for peer in card.similar %}<a href="#{{ peer.anchor }}-{{ topic_key }}" data-candidate-peer>{{ peer.title }}</a>{% endfor %}</div>{% endif %}
+</article>
+{%- endmacro %}

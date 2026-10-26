@@ -1,0 +1,386 @@
+{
+  "sources": [
+    {
+      "seed_key": "tci-hwpx",
+      "title": "TCI검사",
+      "author": "박상란 (표지 작성자)",
+      "perspective": "척도·하위척도·기질 및 성격 유형 설명",
+      "filename": "TCI검사.hwpx",
+      "alternate_filename": "TCI검사.pdf",
+      "edition": "unknown",
+      "scope": "표지: 재활과학대학원 미술치료 박상란. 검사개요에서 전 연령의 검사판을 구별하나 각 해석의 적용판은 미확인. PDF 33쪽과 HWPX의 절 순서·NS1·기질22·성격16 본문을 대조해 동일 자료의 대체 형식으로 연결함. 전체 바이트 또는 전 문장의 동일성을 뜻하지 않음.",
+      "active": true
+    },
+    {
+      "seed_key": "tci-types-pdf",
+      "title": "TCI기질유형",
+      "author": "",
+      "perspective": "기질·성격 27유형과 SC 성숙도",
+      "filename": "TCI기질유형.pdf",
+      "alternate_filename": "",
+      "edition": "unknown",
+      "scope": "18쪽. 1쪽 색인, 2~11쪽 기질, 12~17쪽 성격, 18쪽 SC 백분위. 저자와 연령별 적용판 미확인. TCI검사와 겹치는 문장은 독립 전문가 의견으로 세지 않음.",
+      "active": true
+    },
+    {
+      "seed_key": "jtci-ppt",
+      "title": "JTCI / TCI 기질 및 성격 유형별 해석집",
+      "author": "",
+      "perspective": "기질·성격 유형별 해석",
+      "filename": "★JTCI 유형별해석집.ppt",
+      "alternate_filename": "",
+      "edition": "unknown",
+      "scope": "실제 표지 텍스트는 JTCI / TCI 기질 및 성격 유형별 해석집. 파일명의 JTCI만으로 청소년 전용 또는 성인 공통 적용을 확정할 수 없음. 판별 적용 근거 추가 확인 전 항목 미수록·성인 자동 적용 없음.",
+      "active": true
+    },
+    {
+      "seed_key": "workshop-yoo",
+      "title": "TCI 기질과 성격의 이해",
+      "author": "유성진",
+      "perspective": "TCI 기질·성격 이해 워크샵",
+      "filename": "[최신]TCI 워크샵(유성진 2022).pdf",
+      "alternate_filename": "",
+      "edition": "unknown",
+      "scope": "표지에서 제목·유성진·한양사이버대학교 상담심리학과 확인. 95쪽. 파일명의 2022는 발행연도로 별도 확정하지 않음. 연령별 적용판 미확인, 초기 문단 미수록.",
+      "active": true
+    }
+  ],
+  "interpretations": [
+    {
+      "seed_key": "hwpx-temperament-hhh",
+      "source_key": "tci-hwpx",
+      "title": "기질 HHH · 섬세함과 신중한 관계",
+      "section": "innate",
+      "perspective": "유형 중심",
+      "location": "TCI검사.hwpx · 기질 (22) H-H-H Sensitive · 강점 4문장 (대체 PDF 26쪽)",
+      "original": "(예민한) / Passive-Aggressive(수동-공격적)\n\n- 감수성이 풍부하여 다양한 감정을 섬세하게 느끼면서도 원만한 인간관계를 위해 직접적으로 감정을 표현하는 일은 별로 없는 신중하고 민감한 사람임\n- 새롭거나 흥미로운 일에 쉽게 끌리기도 하지만, 사소한 부분어 대해서도 심사숙고하기 때문에 매사에 빈틈이 없음\n- 대인관계에서 공손하고 예의 바른 태도를 보이며, 거친 감정을 경솔하게 드러내는 경우는 별로 없음\n- 자기 주장은 강하게 펼치지 않으면서 남의 의견에 귀를 기울이며 사람들과의 관계에서 상처 받지 않으려고 조심함",
+      "description": "감수성이 풍부하고 다양한 감정을 섬세하게 느끼며, 원만한 관계를 위해 감정 표현에 신중합니다. 새롭거나 흥미로운 일에 끌리면서도 사소한 부분까지 심사숙고합니다. 대인관계에서 공손하고 예의 바르며 남의 의견에 귀를 기울입니다.",
+      "edition": "unknown",
+      "scope": "해당 절의 검사판·연령별 적용을 명시적으로 확인하지 못함. 성인·청소년에 자동 적용하지 않는 참고 자료.",
+      "related_scales": [
+        "NS",
+        "HA",
+        "RD"
+      ],
+      "related_type": {
+        "family": "temperament",
+        "code": "HHH"
+      },
+      "conditions": {
+        "version": 1,
+        "status": "reference",
+        "operator": "and",
+        "missing": "not_matched",
+        "clauses": [
+          {
+            "kind": "type",
+            "family": "temperament",
+            "code": "HHH"
+          }
+        ]
+      },
+      "original_criteria": "기질 NS-HA-RD H-H-H. H/M/L 수치 경계는 해당 문단에 없음. 조건의 유형은 현재 분류를 따르되 원문 경계 일치를 단정하지 않아 참고용. 색인 1쪽 22번과 본문 9쪽 Sensitive 제목 및 인접 21·23번을 대조.",
+      "sort_order": 10,
+      "group_key": "temperament-hhh-sensitive",
+      "conflict": "",
+      "active": true,
+      "selection": {
+        "topic": "temperament:HHH",
+        "group": "hhh-sensitive",
+        "relation": "common",
+        "basis": "TCI검사.hwpx (22) H-H-H 강점 첫 4문장(대체 PDF 26쪽)과 TCI기질유형.pdf 9쪽 Sensitive 첫 4항목: 감수성·신중함·공손함·관계에서의 조심성이 겹친다. 동일한 독립 전문가 검증을 뜻하지 않는다."
+      }
+    },
+    {
+      "seed_key": "pdf-temperament-hhh",
+      "source_key": "tci-types-pdf",
+      "title": "기질 HHH · 공손함과 조심스러움",
+      "section": "relationships",
+      "perspective": "유형 중심",
+      "location": "TCI기질유형.pdf · 9쪽 Ⅰ 기질유형 22. Sensitive · 첫 4개 항목 (색인 1쪽 H-H-H)",
+      "original": "- 감수성이 풍부하여 다양한 감정을 섬세하게 느끼면서도 원만한 인간관계를 위해 직접적으로 감 정을 표현하는 일은 별로 없는 신중하고 민감한 사람 - 새롭거나 흥미로운 일에 쉽게 끌리기도 하지만, 사소한 부분에 대해서도 심사숙고하기 때문에 매사에 빈틈이 없음 - 대인관계에서 공손하고 예의바른 태도를 보이며, 거친 감정을 경솔하게 드러내는 경우는 별로 없음 - 자기주장은 강하게 펼치지 않으면서 남의 의견에 귀를 기울이며 사람들과의 관계에서 상처 받 지 않으려고 조심함",
+      "description": "대인관계에서 공손하고 예의 바른 태도를 보이며 거친 감정을 경솔하게 드러내는 일은 드뭅니다. 남의 의견에 귀를 기울이고, 관계에서 상처받지 않으려고 조심합니다.",
+      "edition": "unknown",
+      "scope": "해당 절의 검사판·연령별 적용을 명시적으로 확인하지 못함. 성인·청소년에 자동 적용하지 않는 참고 자료.",
+      "related_scales": [
+        "NS",
+        "HA",
+        "RD"
+      ],
+      "related_type": {
+        "family": "temperament",
+        "code": "HHH"
+      },
+      "conditions": {
+        "version": 1,
+        "status": "reference",
+        "operator": "and",
+        "missing": "not_matched",
+        "clauses": [
+          {
+            "kind": "type",
+            "family": "temperament",
+            "code": "HHH"
+          }
+        ]
+      },
+      "original_criteria": "기질 NS-HA-RD H-H-H. H/M/L 수치 경계는 해당 문단에 없음. 조건의 유형은 현재 분류를 따르되 원문 경계 일치를 단정하지 않아 참고용. 색인 1쪽 22번과 본문 9쪽 Sensitive 제목 및 인접 21·23번을 대조. TCI검사와 설명 중복이 있어 별도 전문가 합의로 해석하지 않음. 원래 기준 추가 확인: TCI기질유형.pdf 1쪽 하단 H: T≥56, M: 정수 표기 46~55, L: T≤45. 원문이 명시하지 않은 소수점 구간은 보정하지 않으며 검사판 미확인·참고용 상태를 유지한다.",
+      "sort_order": 20,
+      "group_key": "temperament-hhh-sensitive",
+      "conflict": "",
+      "active": true,
+      "selection": {
+        "topic": "temperament:HHH",
+        "group": "hhh-relationships",
+        "relation": "additional",
+        "basis": "TCI기질유형.pdf 9쪽 Sensitive 첫 4항목과 TCI검사.hwpx (22) H-H-H 강점 대조. 공통 원문 중 공손함·예의·타인 의견 청취를 중심으로 발췌해 hhh-sensitive 설명을 보강한다. 타고난 특성 설명과 함께 선택할 수 있도록 별도 묶음으로 연결한다."
+      }
+    },
+    {
+      "seed_key": "hwpx-character-mhh",
+      "source_key": "tci-hwpx",
+      "title": "성격 MHH · 따뜻한 연대감",
+      "section": "outlook",
+      "perspective": "유형 중심",
+      "location": "TCI검사.hwpx · 성격 (16) M-H-H 사려깊은 · 본문 5문장 (대체 PDF 31쪽)",
+      "original": "다정다감하며 동정심이 많고 따뜻한 마음을 지니고 있다.\n다른 사람들을 돕고 싶어하고 공정하게 대하고 싶어하며 타인과 깊은 연대감을 느낀다.\n때로는 나와 다른사람의 경계를 두지 않은채 헌신적인 도움을 주기도 한다.\n자기것을 고집하는 일은 드물고 상황과 맥락에 따른 유연성이나 융통성이 잘 발휘되는 편이다.\n결과가 좋고 나쁨에 관계없이 다른 사람에게 기여하는 자체를 통해 기쁨과 만족을 경험할 수 있다.",
+      "description": "다정다감하고 동정심이 많으며 다른 사람을 돕고 공정하게 대하고 싶어합니다. 상황과 맥락에 따른 유연성을 발휘하고, 다른 사람에게 기여하는 자체에서 기쁨과 만족을 경험할 수 있습니다.",
+      "edition": "unknown",
+      "scope": "해당 절의 검사판·연령별 적용을 명시적으로 확인하지 못함. 성인·청소년에 자동 적용하지 않는 참고 자료.",
+      "related_scales": [
+        "SD",
+        "CO",
+        "ST"
+      ],
+      "related_type": {
+        "family": "character",
+        "code": "MHH"
+      },
+      "conditions": {
+        "version": 1,
+        "status": "reference",
+        "operator": "and",
+        "missing": "not_matched",
+        "clauses": [
+          {
+            "kind": "type",
+            "family": "character",
+            "code": "MHH"
+          }
+        ]
+      },
+      "original_criteria": "성격 SD-CO-ST M-H-H. 기질 M-H-H(수동-회피적)와 구별. 해당 절 H/M/L 수치 경계 미확인으로 참고용. 색인 16번과 사려 깊은 본문을 대조.",
+      "sort_order": 30,
+      "group_key": "character-mhh-thoughtful",
+      "conflict": "",
+      "active": true,
+      "selection": {
+        "topic": "character:MHH",
+        "group": "mhh-thoughtful",
+        "relation": "common",
+        "basis": "TCI검사.hwpx (16) M-H-H 5문장(대체 PDF 31쪽)과 TCI기질유형.pdf 15쪽 사려 깊은 5항목: 따뜻함·도움·연대감·융통성·기여의 만족이 겹친다. 검사판 확인을 뜻하지 않는다."
+      }
+    },
+    {
+      "seed_key": "pdf-character-mhh",
+      "source_key": "tci-types-pdf",
+      "title": "성격 MHH · 기여에서 느끼는 만족",
+      "section": "outlook",
+      "perspective": "유형 중심",
+      "location": "TCI기질유형.pdf · 15쪽 Ⅱ 성격유형 16. 사려 깊은 · 5개 항목 (색인 1쪽 M-H-H)",
+      "original": "- 다정다감하며, 동정심이 많고, 따뜻한 마음을 지니고 있음 - 다른 사람들을 돕고 싶어 하고, 공정하게 대하고 싶어 하며, 타인과 깊은 연대감을 느낌 - 때로는 나와 다른 사람의 경계를 두지 않은 채 헌신적인 도움을 주기도 함 - 자기 것을 고집하는 일은 드물고 상황과 맥락에 따른 유연성이나 융통성이 잘 발휘되는 편임 - 결과가 좋고 나쁨에 관계없이 다른 사람에게 기여하는 과정 자체를 통해 기쁨과 만족을 경험할 수 있음",
+      "description": "다정다감하고 따뜻한 마음을 지니며 다른 사람과 깊은 연대감을 느낍니다. 자신의 것을 고집하는 일은 드물고, 결과에 관계없이 다른 사람에게 기여하는 과정 자체에서 기쁨과 만족을 경험할 수 있습니다.",
+      "edition": "unknown",
+      "scope": "해당 절의 검사판·연령별 적용을 명시적으로 확인하지 못함. 성인·청소년에 자동 적용하지 않는 참고 자료.",
+      "related_scales": [
+        "SD",
+        "CO",
+        "ST"
+      ],
+      "related_type": {
+        "family": "character",
+        "code": "MHH"
+      },
+      "conditions": {
+        "version": 1,
+        "status": "reference",
+        "operator": "and",
+        "missing": "not_matched",
+        "clauses": [
+          {
+            "kind": "type",
+            "family": "character",
+            "code": "MHH"
+          }
+        ]
+      },
+      "original_criteria": "성격 SD-CO-ST M-H-H. 기질 M-H-H(수동-회피적)와 구별. 해당 절 H/M/L 수치 경계 미확인으로 참고용. 색인 16번과 사려 깊은 본문을 대조. TCI검사와 겹치는 설명. 원래 기준 추가 확인: TCI기질유형.pdf 1쪽 하단 H: T≥56, M: 정수 표기 46~55, L: T≤45. 원문이 명시하지 않은 소수점 구간은 보정하지 않으며 검사판 미확인·참고용 상태를 유지한다.",
+      "sort_order": 40,
+      "group_key": "character-mhh-thoughtful",
+      "conflict": "",
+      "active": true,
+      "selection": {
+        "topic": "character:MHH",
+        "group": "mhh-thoughtful",
+        "relation": "alternative",
+        "basis": "TCI기질유형.pdf 15쪽 사려 깊은 5항목과 TCI검사.hwpx (16) M-H-H 대조. 같은 원문 주제의 다른 보고서용 표현이며 깊은 연대감과 기여 과정의 만족에 무게를 둔다. 동일 문장으로 합치지 않는다."
+      }
+    },
+    {
+      "seed_key": "hwpx-ns1-high",
+      "source_key": "tci-hwpx",
+      "title": "NS1 · 높은 쪽 참고 설명",
+      "section": "subscales",
+      "perspective": "하위척도 중심",
+      "location": "TCI검사.hwpx · ⓵NS1 탐색적 흥분/관습적 안정성 · 높은 점수 문단 (대체 PDF 7쪽)",
+      "original": "이 하위척도에서 높은 점수를 보이는 사람은, 많은 사람들이 시간 낭비라고 느낄 만한 낯선 상황이나 낯선 장소를 탐색하는 데 흥미를 느낀다. 따라서 이러한 사람들은 때로 ‘감각 추구적’ 이라고 기술되기도 한다. 새로운 생각이나 활동에 쉽게 빠져들고 스릴과 흥분, 모험을 즐긴다. 단조로운 것에 쉽게 싫증을 느끼며, 반복적인 일상을 피하여 변화를 추구한다. 따라서 이들은 때로 비관습적이거나 혁신적인 사람으로 인식된다.",
+      "description": "낯선 상황이나 장소를 탐색하는 데 흥미를 느끼고, 새로운 생각과 활동에 쉽게 빠져들며 스릴과 모험을 즐깁니다. 단조로운 것에 쉽게 싫증을 느끼고 변화를 추구합니다.",
+      "edition": "unknown",
+      "scope": "해당 절의 검사판·연령별 적용을 명시적으로 확인하지 못함. 성인·청소년에 자동 적용하지 않는 참고 자료.",
+      "related_scales": [
+        "NS1"
+      ],
+      "related_type": null,
+      "conditions": {
+        "version": 1,
+        "status": "reference",
+        "operator": "and",
+        "missing": "not_matched",
+        "clauses": []
+      },
+      "original_criteria": "원문은 높은/낮은 점수라고만 기술하며 원점수 수치 경계가 없음. 하위척도에 주척도 T55/T56 또는 H/M/L을 적용하지 않음. 수치 조건 없이 참고용으로 보관.",
+      "sort_order": 50,
+      "group_key": "",
+      "conflict": "",
+      "active": true,
+      "selection": {
+        "topic": "scale:NS1",
+        "group": "ns1-poles",
+        "relation": "alternative",
+        "basis": "TCI검사.hwpx NS1 높은 점수 문단과 이어지는 반면 낮은 점수 문단(대체 PDF 7쪽)은 서로 반대 극의 설명이다. 원점수의 규준 대비 위치·수치 경계가 없어 어느 극인지 판정하지 않는다."
+      }
+    },
+    {
+      "seed_key": "hwpx-ns1-low",
+      "source_key": "tci-hwpx",
+      "title": "NS1 · 낮은 쪽 참고 설명",
+      "section": "subscales",
+      "perspective": "하위척도 중심",
+      "location": "TCI검사.hwpx · ⓵NS1 탐색적 흥분/관습적 안정성 · 반면 낮은 점수 문단 (대체 PDF 7쪽)",
+      "original": "반면 낮은 점수를 보이는 사람은 새롭거나 신기한 자극에 대해서 별 흥미를 느끼지 않는다. 이들은 탐색을 통해 새로운 즐거움을 찾기보다는 익숙한 장소나 사람, 상황에서 더 만족을 느끼며, 새로운 생각이나 활동에 빠져드는 것을 꺼려한다. 특별히 실용적인 이유가 없이는 자신이 지속해 온 행동 방식을 잘 바꾸려 하지 않는다. 좀처럼 지루해 하지 않으며, 새롭고 더 좋아 보이는 방식이 있더라도 자신에게 익숙한 방식을 고수하려는 경향을 보인다. 따라서 종종 관습적인 사람으로 인식된다.",
+      "description": "새롭거나 신기한 자극보다 익숙한 장소와 사람, 상황에서 만족을 느끼는 편입니다. 실용적인 이유가 없다면 지속해 온 행동 방식을 잘 바꾸지 않으며, 익숙한 방식을 유지하려는 경향이 있습니다.",
+      "edition": "unknown",
+      "scope": "해당 절의 검사판·연령별 적용을 명시적으로 확인하지 못함. 성인·청소년에 자동 적용하지 않는 참고 자료.",
+      "related_scales": [
+        "NS1"
+      ],
+      "related_type": null,
+      "conditions": {
+        "version": 1,
+        "status": "reference",
+        "operator": "and",
+        "missing": "not_matched",
+        "clauses": []
+      },
+      "original_criteria": "원문은 높은/낮은 점수라고만 기술하며 원점수 수치 경계가 없음. 하위척도에 주척도 T55/T56 또는 H/M/L을 적용하지 않음. 수치 조건 없이 참고용으로 보관.",
+      "sort_order": 60,
+      "group_key": "",
+      "conflict": "",
+      "active": true,
+      "selection": {
+        "topic": "scale:NS1",
+        "group": "ns1-poles",
+        "relation": "alternative",
+        "basis": "TCI검사.hwpx NS1 반면 낮은 점수 문단과 앞의 높은 점수 문단(대체 PDF 7쪽) 대조. 익숙함 유지와 탐색 선호의 다른 극이다. 개인 위치 미확인·참고 구분을 유지한다."
+      }
+    },
+    {
+      "seed_key": "pdf-sc-average",
+      "source_key": "tci-types-pdf",
+      "title": "SC 백분위 · 중간",
+      "section": "combined",
+      "perspective": "기질/성격 연계",
+      "location": "TCI기질유형.pdf · 18쪽 Ⅲ 성격의 성숙도 · 2. 30 < SC의 백분위점수 < 70 : Average",
+      "original": "- 전반적으로 성격이 보통 수준으로 잘 발달되어 있음. 기질 유형에서 흔히 나타나는 저서 및 행동 반응이 대체로 상황에 적절하게 조절되어 표현될 수 있음. 일상적인 적응 수준이 비교적 양호할 것으로 예상됨. 성격의 성숙을 위해 좀 더 노력한다면, 기질 반응이 좀 더 유연하게 조절될 수 있음.",
+      "description": "전반적으로 성격이 보통 수준으로 발달되어 있고, 기질 반응이 대체로 상황에 적절하게 조절되어 표현될 수 있습니다. 성격의 성숙을 위해 더 노력한다면 기질 반응이 좀 더 유연하게 조절될 수 있습니다.",
+      "edition": "unknown",
+      "scope": "해당 절의 검사판·연령별 적용을 명시적으로 확인하지 못함. 성인·청소년에 자동 적용하지 않는 참고 자료.",
+      "related_scales": [
+        "SC"
+      ],
+      "related_type": null,
+      "conditions": {
+        "version": 1,
+        "status": "reference",
+        "operator": "and",
+        "missing": "not_matched",
+        "clauses": [
+          {
+            "kind": "numeric",
+            "scale": "SC",
+            "metric": "percentile",
+            "lower": "30",
+            "upper": "70",
+            "lower_inclusive": false,
+            "upper_inclusive": false
+          }
+        ]
+      },
+      "original_criteria": "2. 30 < SC의 백분위점수 < 70 : Average 원문 경계 그대로, 30·70 포함 안 함. T점수로 환산하지 않음. 원문 중간 설명의 저서는 보고서용 설명에서 기질 반응으로 정리. 검사판 미확인으로 참고용.",
+      "sort_order": 70,
+      "group_key": "",
+      "conflict": "",
+      "active": true,
+      "selection": {
+        "topic": "combined:SC",
+        "group": "sc-maturity",
+        "relation": "alternative",
+        "basis": "TCI기질유형.pdf 18쪽 성격의 성숙도 2번 30<SC백분위<70과 1번 SC백분위>70은 서로 다른 구간의 대안이다. 입력 SC 백분위만 비교하며 30·70을 포함하지 않는다."
+      }
+    },
+    {
+      "seed_key": "pdf-sc-high",
+      "source_key": "tci-types-pdf",
+      "title": "SC 백분위 · 높음",
+      "section": "combined",
+      "perspective": "기질/성격 연계",
+      "location": "TCI기질유형.pdf · 18쪽 Ⅲ 성격의 성숙도 · 1. SC의 백분위점수 > 70 : High",
+      "original": "- 전반적으로 성격이 성숙하게 잘 발달되어 있음. 기질 유형에서 흔히 나타나는 정서 및 행동 반응이 극단적으로 드러나지 않고, 상황에 적절하 면서도 유연하게 조절되어 표현될 수 있음. 일상적인 적응 수준이 매우 양호할 것으로 예상됨.",
+      "description": "전반적으로 성격이 성숙하게 발달되어 있고, 기질 반응이 극단적으로 드러나지 않으며 상황에 적절하고 유연하게 조절되어 표현될 수 있습니다. 일상적인 적응 수준이 매우 양호할 것으로 예상됩니다.",
+      "edition": "unknown",
+      "scope": "해당 절의 검사판·연령별 적용을 명시적으로 확인하지 못함. 성인·청소년에 자동 적용하지 않는 참고 자료.",
+      "related_scales": [
+        "SC"
+      ],
+      "related_type": null,
+      "conditions": {
+        "version": 1,
+        "status": "reference",
+        "operator": "and",
+        "missing": "not_matched",
+        "clauses": [
+          {
+            "kind": "numeric",
+            "scale": "SC",
+            "metric": "percentile",
+            "lower": "70",
+            "upper": null,
+            "lower_inclusive": false,
+            "upper_inclusive": false
+          }
+        ]
+      },
+      "original_criteria": "1. SC의 백분위점수 > 70 : High 원문 경계 그대로, 30·70 포함 안 함. T점수로 환산하지 않음. 원문 중간 설명의 저서는 보고서용 설명에서 기질 반응으로 정리. 검사판 미확인으로 참고용.",
+      "sort_order": 80,
+      "group_key": "",
+      "conflict": "",
+      "active": true,
+      "selection": {
+        "topic": "combined:SC",
+        "group": "sc-maturity",
+        "relation": "alternative",
+        "basis": "TCI기질유형.pdf 18쪽 성격의 성숙도 1번 SC백분위>70과 2번 30<SC백분위<70 대조. 조건과 설명의 강도가 다르다. T점수로 환산하거나 SC를 합성하지 않는다."
+      }
+    }
+  ]
+}

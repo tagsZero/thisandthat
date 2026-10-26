@@ -1,0 +1,53 @@
+{% macro interpretation(key, empty=true, heading=true) %}
+{% set section = composition.sections[key] %}
+<section class="report-interpretation" data-report-section="{{ key }}">{% if heading %}<h3>{{ section_labels[key] }}</h3>{% endif %}
+{% for block in section.blocks %}{% set flags = block_status.get(block.id, {}) %}
+<article class="report-block{{ ' report-short' if pdf_mode and block.text|length < 500 else '' }}" data-report-block="{{ block.id }}">
+<p class="report-flags">{% if flags.reference %}추가 참고 · {% endif %}{% if flags.previous %}이전 기준에서 선택 · {% endif %}{% if flags.mismatch %}현재 적용 조건과 다름 · {% endif %}{% if flags.changed %}자료 변경 또는 사용 불가 · {% endif %}{% if not status_known %}자료 최신 상태 확인 불가{% endif %}{% for family, diff in flags.get('type_differences', {}).items() %} {{ '기질' if family == 'temperament' else '성격' }} {{ diff.previous }} → {{ diff.current or '미완성' }}{% endfor %}</p>
+{% if flags.provided_draft %}<p class="report-flags">제공 자료 기반 통합 설명</p>{% endif %}<p class="report-text">{{ block.text }}</p>{% if not pdf_mode %}<a class="report-edit-link" href="{{ url_for('candidates.index', report_id=report.id, focus=block.id) }}">이 문장 편집</a>{% endif %}
+{% if pdf_mode %}<div class="report-citation">{% for member in block.evidence.members %}<p>출처: {{ member.source.title }}{% if member.source.author %} · {{ member.source.author }}{% endif %} · {{ member.item.location }} · 항목 #{{ member.item.id }}</p>
+<p>선택 당시 검사판: {{ member.item.edition }} / {{ member.source.edition }} · 조건 상태: {{ member.item.conditions.status }} · 원래 기준: {{ member.item.original_criteria }}</p>{% for note in member.get('notes', []) %}<p>{{ note }}</p>{% endfor %}{% if member.item.selection %}<p>연결 근거: {{ member.item.selection.basis }}</p>{% endif %}{% endfor %}
+{% if flags.previous %}<p>선택 당시 경계: L ≤ {{ block.evidence.settings.low }} · H ≥ {{ block.evidence.settings.high }} · 반올림: {{ block.evidence.settings.rounding }}{% for code, bounds in block.evidence.settings.get('overrides', {}).items() %} · {{ code }} 예외 {{ bounds.low }}/{{ bounds.high }}{% endfor %}</p>{% endif %}</div>{% else %}
+<details class="report-evidence"><summary>출처·선택 당시 근거 보기</summary>
+{% for member in block.evidence.members %}<p>출처: {{ member.source.title }}{% if member.source.author %} · {{ member.source.author }}{% endif %} · {{ member.item.location }} · 항목 #{{ member.item.id }}</p>
+<p>파일: {{ member.source.filename }} / {{ member.source.alternate_filename }} · 검사판: {{ member.item.edition }} / {{ member.source.edition }}</p>
+<p>적용 범위: {{ member.item.scope }} / {{ member.source.scope }} · {{ member.reasons|join(' · ') }} {{ member.item.conflict }}</p>
+{% for note in member.get('notes', []) %}<p>{{ note }}</p>{% endfor %}
+<p>선택 당시 원문: {{ member.item.original }}</p><p>조건: {{ member.item.conditions|tojson }} · 원래 기준: {{ member.item.original_criteria }}</p>{% if member.item.selection %}<p>설명 관계: {{ relations[member.item.selection.relation] }}</p><p>연결 근거: {{ member.item.selection.basis }}</p>{% endif %}{% endfor %}
+<p>선택 당시 보고서용 설명: {{ block.evidence.description }}</p><p>선택 당시 기준: {{ block.evidence.settings|tojson }}</p><p>선택 당시 점수: {{ block.evidence.scores|tojson }}</p>
+<p data-current-settings>현재 기준: {{ report.settings|tojson }}</p><p data-current-scores>현재 점수: {{ report.scores|tojson }}</p></details>{% endif %}</article>
+{% endfor %}
+{% if section.opinion %}<div class="report-opinion"><span>직접 의견</span><p class="report-text">{{ section.opinion }}</p>{% if not pdf_mode %}<a class="report-edit-link" href="{{ url_for('candidates.index', report_id=report.id, focus='opinion_' ~ key) }}">이 의견 편집</a>{% endif %}</div>{% endif %}
+{% if empty and not section.blocks and not section.opinion %}<p class="muted">선택된 해석 없음{% if not pdf_mode %} · <a href="{{ url_for('candidates.index', report_id=report.id) }}">해석 작성하기</a>{% endif %}</p>{% endif %}</section>
+{% endmacro %}
+{% macro profile(rows) %}<div class="report-profile">{% for row in rows %}
+<div class="profile-row" data-scale="{{ row.code }}" data-grade="{{ row.grade or '' }}" data-position="{{ row.position if row.position is not none else '' }}">
+<div class="profile-label"><h3>{{ row.name }} <span>{{ row.code }}</span></h3><p>{{ row.guide }}</p></div>
+<div class="profile-plot"><div class="profile-ends"><span>낮음</span><span>높음</span></div><div class="profile-track">
+{% if row.position is not none %}<span class="profile-marker grade-{{ row.grade or 'unknown' }}" style="left:{{ row.position }}%" aria-label="{{ row.code }} 백분위 {{ row.score.percentile }}, T분류 {{ row.grade or '미입력' }}">{{ row.grade or '?' }}</span>{% endif %}
+</div><div class="profile-axis"><span>0</span><span>50</span><span>100</span></div></div>
+<div class="profile-value">백분위 <strong>{{ row.score.percentile if row.position is not none else '미입력' }}</strong><span>T분류 {{ row.grade or '미입력' }}</span></div>
+</div>{% endfor %}</div>{% endmacro %}
+{% macro type_summary(family, label, codes) %}<div class="report-type"><h3>{{ label }}유형 <strong>{{ types[family] or '미완성' }}</strong></h3><p>{% for code in codes %}<span class="type-grade">{{ code }} <b class="grade-{{ types.grades[code] or 'unknown' }}">{{ types.grades[code] or '?' }}</b></span>{% endfor %}</p></div>{% endmacro %}
+<article class="report-paper">
+<header class="report-heading"><div class="eyebrow">TCI · 해석 보고서</div><h1>{{ report.name or report.reference }}</h1><p>{{ report.reference if report.name and report.reference else '' }} · 검사일 {{ report.exam_date or '미입력' }} · 성인 TCI-RS 입력 양식</p>
+<p class="report-completeness">{% if missing %}작성 중 · 주척도 T 미입력: {{ missing|join(', ') }}{% else %}7개 주척도 T 입력 완료{% endif %}{% if not pdf_mode %} · <a href="{{ url_for('web.edit_report', report_id=report.id) }}">점수 편집</a>{% endif %}</p></header>
+{% if not status_known %}<p class="report-notice" role="status">자료의 최신 상태를 조회하지 못했습니다. 저장된 본문·출처 사본을 표시합니다.{% if not pdf_mode %} <a href="{{ request.path }}">다시 조회</a>{% endif %}</p>{% endif %}
+<p class="report-guide">막대 위치는 입력 백분위, H/M/L은 저장된 T점수 분류입니다. H 높음 · M 중간 · L 낮음. 아래 척도 설명은 공통 안내입니다.</p>
+<section class="report-family"><h2>기질 <span>자극에 대한 자동적 반응</span></h2>{{ profile(profile_rows[:4]) }}{{ type_summary('temperament','기질',['NS','HA','RD']) }}
+{{ interpretation('innate') }}{{ interpretation('relationships') }}{{ interpretation('acceptance') }}</section>
+<section class="report-family"><h2>성격 <span>추구하는 목표와 가치</span></h2>{{ profile(profile_rows[4:]) }}{{ type_summary('character','성격',['SD','CO','ST']) }}
+{{ interpretation('outlook') }}{{ interpretation('growth') }}</section>
+{% if options.subscales %}<section class="report-additional" data-additional="subscales"><h2>하위척도 상세</h2><div class="report-subscales">
+{% for family, items in subscales.items() %}{% for code, name in items %}{% set raw = report.scores.get('subscales', {}).get(code, {}).get('raw') %}{% if raw is not none and raw != '' %}<p>{{ code }} {{ name }} <strong>원점수 {{ raw }}</strong></p>{% endif %}{% endfor %}{% endfor %}</div>
+{% if composition.sections.subscales.blocks or composition.sections.subscales.opinion %}{{ interpretation('subscales', false, false) }}{% endif %}</section>{% endif %}
+{% for key in ['combined','summary'] %}{% if options[key] %}<div class="report-additional" data-additional="{{ key }}">{{ interpretation(key) }}</div>{% endif %}{% endfor %}
+{% if not pdf_mode %}<details class="report-scores"><summary>점수 자세히 보기 · 원점수 / 원본 T / 분류 적용 T / 백분위</summary><div class="table-scroll"><table><thead><tr><th>척도</th><th>원점수</th><th>원본 T</th><th>분류 적용 T</th><th>백분위</th></tr></thead><tbody>
+{% for row in profile_rows %}<tr><th>{{ row.code }}</th>{% for value in [row.score.get('raw'), row.score.get('t'), types.applied[row.code], row.score.get('percentile')] %}<td>{{ value if value is not none and value != '' else '미입력' }}</td>{% endfor %}</tr>{% endfor %}
+{% set sc = report.scores.get('SC', {}) %}<tr><th>SC (선택)</th>{% for key in ['raw','t'] %}<td>{{ sc.get(key) if sc.get(key) is not none and sc.get(key) != '' else '미입력' }}</td>{% endfor %}<td>해당 없음</td><td>{{ sc.get('percentile') if sc.get('percentile') is not none and sc.get('percentile') != '' else '미입력' }}</td></tr>
+</tbody></table></div></details>{% endif %}
+<footer class="report-criteria"><h2>실제 적용 기준</h2><p>공통 경계: L ≤ {{ report.settings.low }} · {{ report.settings.low }} &lt; M &lt; {{ report.settings.high }} · H ≥ {{ report.settings.high }}</p>
+<p>반올림: {{ {'none':'없음','one_decimal':'소수 첫째 자리 · Decimal ROUND_HALF_UP','integer':'정수 · Decimal ROUND_HALF_UP'}[report.settings.rounding] }} · 원본 입력값 유지</p>
+{% for code, bounds in report.settings.get('overrides', {}).items() %}<p>{{ code }} 예외: L ≤ {{ bounds.low }} · {{ bounds.low }} &lt; M &lt; {{ bounds.high }} · H ≥ {{ bounds.high }}</p>{% endfor %}
+<p>PS·SC는 세 글자 유형에 포함하지 않습니다. 백분위 미입력은 위치를 추정하지 않습니다. 참고 표시는 선택 당시 근거와 현재 기준의 차이를 유지합니다.</p></footer>
+</article>

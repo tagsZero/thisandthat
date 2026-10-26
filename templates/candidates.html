@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% macro boundary(key, label, value) -%}
+<label for="{{ key }}">{{ label }}<input id="{{ key }}" name="{{ key }}" aria-label="{{ label }}" inputmode="decimal" value="{{ value }}" aria-describedby="error-{{ key }}"><span class="field-error" id="error-{{ key }}" data-error-for="{{ key }}">{{ errors.get(key, '') }}</span></label>
+{%- endmacro %}
+{% block title %}해석 비교·선택{% endblock %}
+{% block content %}
+<main class="page candidate-page">
+  {% with step=2 %}{% include 'report_steps.html' %}{% endwith %}
+  <a class="breadcrumb" href="{{ url_for('web.review_report', report_id=report.id) }}">{{ icon('back', 16) }} 검사 결과 리뷰</a>
+  <div class="page-heading"><div><div class="eyebrow">02 · 해석 비교·선택</div><h1>{{ report.name or report.reference }}</h1><p class="muted">{{ report.reference if report.name and report.reference else '' }} · 검사일 {{ report.exam_date or '미입력' }} · 성인 TCI-RS 입력 양식</p></div></div>
+  <form method="post" data-candidate-form>
+    <input type="hidden" name="composition" id="composition-data" value='{{ composition|tojson }}'>
+    <input type="hidden" name="valid_settings" id="valid-settings" value='{{ valid_settings|tojson }}'>
+    <div class="workspace-layout-controls" data-layout-controls hidden><span>화면 배치</span><button type="button" data-layout="left" aria-pressed="true">좌측 프로파일</button><button type="button" data-layout="top" aria-pressed="false">상단 프로파일</button></div>
+    <div class="profile-workspace" data-workspace data-layout="left">
+    <aside class="workspace-context">
+    <div class="panel candidate-controls">
+    <input type="hidden" name="compare" value="1">
+    <div class="candidate-toolbar"><label class="inline-label">비교 분류 기준<select name="preset" aria-label="비교 분류 기준"><option value="t56" {% if preset == 't56' %}selected{% endif %}>T56 · 45/56</option><option value="t55" {% if preset == 't55' %}selected{% endif %}>T55 · 45/55</option><option value="custom" {% if preset == 'custom' %}selected{% endif %}>사용자 지정</option></select></label>
+      <button class="button secondary small" type="submit" name="action" value="compare">자료 새로고침 · 비교 갱신</button>
+    </div>
+    <span class="field-error" data-error-for="preset">{{ errors.get('preset', '') }}</span>
+    <details class="classification-settings" {% if errors %}open{% endif %}><summary>상세 분류 설정 · 공통 경계, 반올림, 척도별 예외</summary>
+      <div class="settings-fields">{{ boundary('low', '공통 낮음 종료값 (이하 L)', report.settings.low) }}{{ boundary('high', '공통 높음 시작값 (이상 H)', report.settings.high) }}
+        <label>분류 적용값 반올림<select name="rounding" aria-label="분류 적용값 반올림">{% for value, label in [('none', '없음'), ('one_decimal', '소수 첫째 자리 · 사사오입'), ('integer', '정수 · 사사오입')] %}<option value="{{ value }}" {% if report.settings.rounding == value %}selected{% endif %}>{{ label }}</option>{% endfor %}{% if errors.rounding %}<option selected value="{{ report.settings.rounding }}">{{ report.settings.rounding }}</option>{% endif %}</select><span class="field-error" data-error-for="rounding">{{ errors.get('rounding', '') }}</span></label>
+      </div>
+      <p class="settings-note">두 경계 사이는 M입니다. 원본 점수는 유지하며 조회·비교는 저장하지 않습니다.</p>
+      <div class="table-scroll"><table class="override-table"><thead><tr><th>척도별 예외 사용</th><th>낮음 종료값</th><th>높음 시작값</th></tr></thead><tbody>{% for code, name, group in scales %}{% set override = report.settings.get('overrides', {}).get(code) %}
+        <tr><th><label><input type="checkbox" name="{{ code }}_override" value="1" {% if override is not none %}checked{% endif %}> {{ code }} {{ name }}</label></th><td>{{ boundary(code ~ '_low', code ~ ' 낮음 종료값', override.low if override else '') }}</td><td>{{ boundary(code ~ '_high', code ~ ' 높음 시작값', override.high if override else '') }}</td></tr>
+      {% endfor %}</tbody></table></div>
+    </details>
+  </div>
+  <p class="candidate-status" id="candidate-status" role="status">{{ '입력 기준과 표시 결과가 다릅니다. 마지막 유효 결과를 표시합니다. 오류를 수정하고 비교를 갱신하세요.' if errors else '현재 기준으로 조회했습니다. 비교와 새로고침은 저장된 검사결과를 변경하지 않습니다.' }}</p>
+    <div class="panel workspace-profile" id="workspace-profile">{% include 'workspace_profile.html' %}</div>
+    </aside>
+    <section class="workspace-interpretations" aria-label="해석 검토와 선택 내용">
+    <div class="workspace-tabs" data-workspace-tabs hidden><button type="button" data-view="candidates" aria-pressed="true">척도·하위척도</button><button type="button" data-view="temperament" aria-pressed="false">기질유형</button><button type="button" data-view="character" aria-pressed="false">성격·연계</button><button type="button" data-view="selected" aria-pressed="false">선택 내용 <span data-selection-count>{{ composition.sections.values()|map(attribute='blocks')|map('length')|sum }}</span>개</button></div>
+    <div class="topic-navigation" data-topic-navigation hidden></div>
+    <div id="candidate-results" aria-live="polite">{% include 'candidate_results.html' %}</div>
+    <aside class="panel composition-editor" id="composition-editor">{% with report=workspace_report %}{% include 'composition_editor.html' %}{% endwith %}</aside>
+    </section>
+    </div>
+  <div class="workspace-savebar">
+  <p>선택 <strong data-selection-count>{{ composition.sections.values()|map(attribute='blocks')|map('length')|sum }}</strong>개</p>
+  <div class="composition-actions"><button class="button primary" name="action" value="report">저장하고 보고서 보기</button><button class="button secondary" name="action" value="save">현재 해석·기준 저장</button><button class="button secondary" name="action" value="edit">저장하고 점수 편집</button><button class="button secondary" name="action" value="dashboard">저장하고 대시보드</button></div>
+  <p id="save-status" role="status">{{ errors.get('composition', message) }}</p><p class="settings-note"><a href="#composition-editor">선택문 편집·직접 의견으로 이동</a></p>
+  </div>
+  </form>
+  <script id="composition-labels" type="application/json">{{ sections|tojson }}</script>
+  <script id="selection-labels" type="application/json">{{ dict(topics=topics, relations=relations)|tojson }}</script>
+  <script id="block-status-data" type="application/json">{{ block_status|tojson }}</script>
+  <script id="composition-current-context" type="application/json">{{ dict(settings=valid_settings, scores=report.scores, valid=not errors, saved_settings=saved_settings)|tojson }}</script>
+</main>
+<script src="{{ url_for('static', filename='pdf_download.js') }}" defer></script><script src="{{ url_for('static', filename='candidates.js') }}" defer></script><script src="{{ url_for('static', filename='workspace.js') }}" defer></script>
+{% endblock %}

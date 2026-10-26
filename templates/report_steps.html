@@ -1,0 +1,4 @@
+<nav class="report-steps" aria-label="보고서 작성 단계">
+{% for number, label, endpoint in [(1,'점수 입력','web.edit_report'),(2,'해석 작성','candidates.index'),(3,'보고서 확인','final_report.show')] %}
+{% if report.id %}<a href="{{ url_for(endpoint, report_id=report.id, **({'return_to':'candidates'} if number == 1 else {})) }}" {% if step == number %}aria-current="step"{% endif %}>{{ number }} · {{ label }}</a>{% else %}<span {% if step == number %}aria-current="step"{% endif %}>{{ number }} · {{ label }}</span>{% endif %}
+{% endfor %}</nav>

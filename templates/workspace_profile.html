@@ -1,0 +1,25 @@
+{% set current = workspace_report %}
+{% if type_groups is defined %}<div class="workspace-profile-heading">{% endif %}
+<h2>전체 프로파일</h2>
+{% if type_groups is defined %}<p class="workspace-type-pair"><strong>기질 {{ current.types.temperament or '미완성' }} · 성격 {{ current.types.character or '미완성' }}</strong></p>{% endif %}
+<p class="workspace-criteria">적용 기준: L ≤ {{ current.settings.low }} · H ≥ {{ current.settings.high }} · {{ {'none':'반올림 없음','integer':'정수 반올림','one_decimal':'소수 첫째 자리 반올림'}[current.settings.rounding] }}{% for code, bounds in current.settings.get('overrides', {}).items() %} / {{ code }} {{ bounds.low }}/{{ bounds.high }}{% endfor %}</p>
+{% if type_groups is defined %}<details class="workspace-score-details"><summary>저장 기준과 비교{{ ' · 현재 기준 변경됨' if changed }}</summary>{% endif %}
+<p class="comparison-note">{{ '저장된 기준과 다른 임시 비교 기준 · 아직 저장하지 않았습니다.' if changed else '저장된 기준과 같습니다 · 조회 전용' }}</p>
+<p class="settings-note">저장 기준: L ≤ {{ saved_settings.low }} · H ≥ {{ saved_settings.high }} · {{ {'none':'반올림 없음','integer':'정수 반올림','one_decimal':'소수 첫째 자리 반올림'}[saved_settings.rounding] }}{% for code, bounds in saved_settings.get('overrides', {}).items() %} / {{ code }} {{ bounds.low }}/{{ bounds.high }}{% endfor %}</p>
+{% if type_groups is defined %}</details></div>{% endif %}
+<div class="workspace-profile-groups">
+{% for family, key, codes in [('기질','temperament',['NS','HA','RD']),('성격','character',['SD','CO','ST'])] %}
+<section class="workspace-profile-group"><h3>{{ family }}유형 <button type="button" data-open-topic="{{ key }}:{{ current.types[key] or 'unknown' }}"><strong data-type="{{ key }}">{{ current.types[key] or '미완성' }}</strong></button></h3>
+<p class="settings-note">{{ codes|join(' · ') }} 순서{% if current.types[key] != saved_types[key] %} · 저장 {{ saved_types[key] or '미완성' }} → 현재 {{ current.types[key] or '미완성' }}{% endif %}</p>
+{% for row in profile_rows if row.family == family %}
+<div class="workspace-profile-row" data-scale="{{ row.code }}" data-grade="{{ row.grade or '' }}" data-position="{{ row.position if row.position is not none else '' }}">
+  <div class="workspace-scale"><button type="button" data-open-topic="scale:{{ row.code }}"><strong>{{ row.code }} {{ row.name }}</strong></button><span>원본 T {{ row.score.get('t') if row.score.get('t') not in (none, '') else '미입력' }}{% if row.rounded %} → 적용 {{ row.applied }}{% endif %}</span></div>
+  <div class="workspace-plot">{% if row.position is not none %}<div class="profile-track"><span class="profile-marker grade-{{ row.grade or 'unknown' }}" style="left:{{ row.position }}%" aria-label="{{ row.code }} 백분위 {{ row.score.percentile }}, T분류 {{ row.grade or '미입력' }}">{{ row.grade or '?' }}</span></div>{% else %}<div class="workspace-no-percentile">백분위 미입력</div>{% endif %}</div>
+  <div class="workspace-value">백분위 {{ row.score.percentile if row.position is not none else '미입력' }} · T분류 <b>{{ row.grade or '미입력' }}</b>{% if row.grade != saved_types.grades[row.code] %}<span class="grade-change">저장 {{ saved_types.grades[row.code] or '미입력' }} → {{ row.grade or '미입력' }}</span>{% endif %}</div>
+</div>{% endfor %}</section>{% endfor %}
+</div>
+<p class="settings-note">막대 위치는 입력 백분위(0~100), H/M/L은 선택한 T기준입니다. PS는 유형 코드에 포함하지 않습니다.</p>
+<details class="workspace-score-details"><summary>점수 자세히 보기 · 원점수·적용 T·SC</summary>
+{% for row in profile_rows %}<p>{{ row.code }} 원점수 {{ row.score.get('raw') if row.score.get('raw') not in (none,'') else '미입력' }} · 원본 T {{ row.score.get('t') if row.score.get('t') not in (none,'') else '미입력' }} · 적용 T {{ row.applied if row.applied is not none else '미입력' }}</p>{% endfor %}
+{% set sc = report.scores.get('SC', {}) %}<p>SC (제공된 수치) · 원점수 {{ sc.get('raw') if sc.get('raw') not in (none,'') else '미입력' }} · T {{ sc.get('t') if sc.get('t') not in (none,'') else '미입력' }} · 백분위 {{ sc.get('percentile') if sc.get('percentile') not in (none,'') else '미입력' }}</p>
+</details>

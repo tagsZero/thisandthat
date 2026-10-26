@@ -1,0 +1,3 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>TCI 해석 보고서</title>
+<style>{% for weight, value in fonts.items() %}@font-face {font-family:TCIPdf; font-weight:{{ weight }}; src:url(data:font/otf;base64,{{ value }}) format('opentype');}{% endfor %}
+{{ css|safe }}</style></head><body>{% include 'report_body.html' %}</body></html>

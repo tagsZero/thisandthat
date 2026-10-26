@@ -1,0 +1,33 @@
+@page { size:A4 portrait; margin:16mm 16mm 18mm; }
+:root, html, body { background:#fff; font-family:TCIPdf; font-synthesis:none; font-size:10pt; }
+* { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+.report-paper { padding:0; border:0; border-radius:0; width:auto; }
+.report-heading { padding-bottom:12pt; margin-bottom:12pt; }
+.report-heading h1 { font-size:24pt; }
+.report-heading p, .report-guide, .report-notice { font-size:9pt; }
+.report-guide { padding:9pt; }
+.report-family { margin-top:20pt; }
+.report-paper h2 { font-size:16pt; margin-bottom:12pt; break-after:avoid; }
+.report-family h2 > span { display:inline-block; margin:0 0 0 10pt; font-size:10pt; }
+.profile-row { grid-template-columns:1fr 1.1fr 62pt; gap:10pt; padding:12pt 0; break-inside:avoid; }
+.profile-label h3 { font-size:11pt; }
+.profile-label p { font-size:8.5pt; }
+.profile-value { display:block; text-align:right; font-size:8.5pt; }
+.profile-value strong { display:block; font-size:15pt; }
+.profile-plot { padding-inline:16pt; }
+.profile-marker { width:25pt; height:25pt; font-size:10pt; border-width:2pt; }
+.profile-track { margin:12px 0; }
+.profile-ends, .profile-axis { font-size:8pt; }
+.report-type { padding:12pt; margin:16pt 0; break-inside:avoid; break-after:avoid; }
+.report-interpretation { border:0; border-top:1px solid #e1e7ee; border-radius:0; padding:12pt 0 0; margin:12pt 0; }
+.report-interpretation h3 { font-size:11pt; margin-bottom:8pt; break-after:avoid; }
+.report-text { font-size:10pt; line-height:1.85; margin:8pt 0; orphans:3; widows:3; }
+.report-flags, .report-citation, .report-opinion > span { font-size:8pt; line-height:1.7; }
+.report-flags:empty { display:none; }
+.report-flags { break-after:avoid; }
+.report-citation { color:#66778b; margin:6pt 0 12pt; }
+.report-opinion > span { break-after:avoid; display:block; }
+.report-criteria { margin-top:18pt; padding-top:12pt; break-inside:avoid; }
+.report-criteria p { font-size:8.5pt; }
+.report-subscales p { break-inside:avoid; }
+.report-short { break-inside:avoid; }

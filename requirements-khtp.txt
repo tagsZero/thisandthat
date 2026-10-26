@@ -1,0 +1,3 @@
+# K-HTP image preparation. Existing TCI pins are constraints, not upgrades.
+-c requirements.txt
+Pillow==13.0.0

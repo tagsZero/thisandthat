@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% macro error(key) -%}
+<span class="field-error" id="error-{{ key }}" data-error-for="{{ key }}">{{ errors.get(key, '') }}</span>
+{%- endmacro %}
+{% macro boundary(key, label, value) -%}
+<label for="{{ key }}">{{ label }}<input id="{{ key }}" name="{{ key }}" aria-label="{{ label }}" inputmode="decimal" value="{{ value }}" aria-describedby="error-{{ key }}" {% if errors.get(key) %}aria-invalid="true"{% endif %}>{{ error(key) }}</label>
+{%- endmacro %}
+{% macro additional_input(key, label, value, raw=false) -%}
+<label for="{{ key }}">{{ label }}<input id="{{ key }}" name="{{ key }}" aria-label="{{ label }}" inputmode="{{ 'numeric' if raw else 'decimal' }}" value="{{ value if value is not none else '' }}" placeholder="—" aria-describedby="error-{{ key }}" {% if errors.get(key) %}aria-invalid="true"{% endif %}>{{ error(key) }}</label>
+{%- endmacro %}
+{% block title %}점수 입력{% endblock %}
+{% block content %}
+<main class="page form-page">
+  {% with step=1 %}{% include 'report_steps.html' %}{% endwith %}
+  <a class="breadcrumb" href="{{ url_for('web.dashboard') }}">{{ icon('back', 16) }} TCI 대시보드</a>
+  <div class="page-heading"><div><div class="eyebrow">TCI-RS · 검사 결과 등록</div><h1>{{ '검사 결과 수정' if report.id else '새 점수 입력' }}</h1><p class="muted">결과지에 기재된 수치를 입력하세요. 일부 점수만 입력해도 저장할 수 있습니다.</p></div></div>
+  <form method="post" class="score-form" data-preview-url="{{ url_for('web.classification_preview') }}">
+    <section class="panel input-panel">
+      <div class="panel-heading"><h2>대상 정보</h2><span class="quiet-label">이름 또는 관리번호 입력</span></div>
+      <div class="identity-fields">
+        <label for="name">이름<input id="name" name="name" value="{{ report.name }}" maxlength="100" placeholder="검사 대상자 이름" aria-describedby="error-name" {% if errors.name %}aria-invalid="true"{% endif %}>{{ error('name') }}</label>
+        <label>관리번호 <span class="optional">선택</span><input name="reference" value="{{ report.reference }}" maxlength="100" placeholder="예: TCI-001"></label>
+        <label>검사일<input name="exam_date" type="date" value="{{ report.exam_date.isoformat() if report.exam_date else '' }}">{{ error('exam_date') }}</label>
+      </div>
+    </section>
+    <section class="panel input-panel">
+      <div class="panel-heading"><h2>검사 점수</h2><label class="inline-label">분류 기준<select id="preset" name="preset" aria-label="분류 기준" aria-describedby="error-preset" {% if errors.preset %}aria-invalid="true"{% endif %}><option value="t56" {% if preset == 't56' %}selected{% endif %}>T56 · 45/56</option><option value="t55" {% if preset == 't55' %}selected{% endif %}>T55 · 45/55</option><option value="custom" {% if preset == 'custom' %}selected{% endif %}>사용자 지정</option></select></label></div>
+      {{ error('preset') }}
+      <details class="classification-settings" {% if errors or preset == 'custom' or report.settings.rounding != 'none' or report.settings.get('overrides') %}open{% endif %}>
+        <summary>상세 분류 설정 · 공통 경계, 반올림, 척도별 예외</summary>
+        <div class="settings-fields">
+          {{ boundary('low', '공통 낮음 종료값 (이하 L)', report.settings.low) }}
+          {{ boundary('high', '공통 높음 시작값 (이상 H)', report.settings.high) }}
+          <label for="rounding">분류 적용값 반올림<select id="rounding" name="rounding" aria-label="분류 적용값 반올림" aria-describedby="error-rounding" {% if errors.rounding %}aria-invalid="true"{% endif %}>{% for value, label in [('none','없음'), ('one_decimal','소수 첫째 자리 · 사사오입'), ('integer','정수 · 사사오입')] %}<option value="{{ value }}" {% if report.settings.rounding == value %}selected{% endif %}>{{ label }}</option>{% endfor %}{% if errors.rounding %}<option selected value="{{ report.settings.rounding }}">{{ report.settings.rounding }}</option>{% endif %}</select>{{ error('rounding') }}</label>
+        </div>
+        <p class="settings-note">두 경계 사이는 M입니다. 반올림은 분류에만 적용하며 원본 점수와 경계는 유지합니다.</p>
+        <div class="table-scroll"><table class="override-table"><thead><tr><th>척도별 예외 사용</th><th>낮음 종료값</th><th>높음 시작값</th></tr></thead><tbody>
+          {% for code, name, group in scales %}{% set override = report.settings.get('overrides', {}).get(code) %}
+          <tr><th><label><input type="checkbox" name="{{ code }}_override" value="1" {% if override is not none %}checked{% endif %}> {{ code }} {{ name }}</label></th>
+          <td>{{ boundary(code ~ '_low', code ~ ' 낮음 종료값', override.low if override is not none else '') }}</td>
+          <td>{{ boundary(code ~ '_high', code ~ ' 높음 시작값', override.high if override is not none else '') }}</td></tr>
+          {% endfor %}
+        </tbody></table></div>
+        <p class="settings-note">체크한 척도는 두 경계를 모두 입력하세요. 공통 기준을 바꾸어도 예외는 유지되며, 체크를 해제하면 현재 공통 경계를 적용합니다.</p>
+      </details>
+      <div class="table-scroll"><table class="score-input-table"><thead><tr><th>척도</th><th>원점수</th><th>T점수</th><th>백분위</th><th>현재 분류</th></tr></thead><tbody>
+        {% for code, name, group in scales %}{% set score = report.scores.get(code, {}) %}<tr><th><span class="scale-group">{{ group }}</span><span>{{ name }} <small>{{ code }}</small></span></th>
+        {% for field in ('raw', 't', 'percentile') %}{% set key = code ~ '_' ~ field %}<td><input name="{{ key }}" type="text" inputmode="{{ 'numeric' if field == 'raw' else 'decimal' }}" value="{{ score.get(field) if score.get(field) is not none else '' }}" aria-label="{{ name }} {{ {'raw':'원점수', 't':'T점수', 'percentile':'백분위'}[field] }}" placeholder="—" aria-describedby="error-{{ key }}" {% if errors.get(key) %}aria-invalid="true"{% endif %}>{{ error(key) }}</td>{% endfor %}<td><strong data-input-grade="{{ code }}">{{ (report.types.grades[code] or '미입력') if report.types else '확인 필요' }}</strong></td></tr>{% endfor %}
+      </tbody></table></div>
+      <p class="input-note">{{ icon('file', 16) }} 원점수·T점수·백분위는 각각 결과지의 값을 입력합니다. 빈칸은 미입력으로 저장됩니다.</p>
+    </section>
+    <details class="panel input-panel additional-scores" {% if additional_errors %}open{% endif %}>
+      <summary>추가 점수 입력 <span class="optional">선택 · 성인용 TCI-RS 하위척도·SC</span></summary>
+      <div class="additional-content">
+        <p class="settings-note">결과지에 있는 개인 점수만 입력하세요. 하위척도는 원점수만 받으며 빈칸은 미입력입니다. 합계·표준점수 환산이나 자동 분류는 하지 않습니다.</p>
+        <fieldset class="sc-fields"><legend>SC 자율성+연대감</legend>{% set sc = report.scores.get('SC', {}) %}
+          <div class="settings-fields">{% for field, label in [('raw', '원점수'), ('t', 'T점수'), ('percentile', '백분위')] %}{{ additional_input('SC_' ~ field, 'SC ' ~ label, sc.get(field), field == 'raw') }}{% endfor %}</div>
+        </fieldset>
+        <h3 class="subscale-heading">하위척도 원점수 · 29개</h3>
+        <div class="subscale-grid">{% for parent, name, group in scales %}
+          <fieldset class="subscale-group"><legend>{{ group }} · {{ parent }} {{ name }}</legend>
+            {% for code, label in subscales[parent] %}{{ additional_input(code ~ '_raw', code ~ ' ' ~ label, report.scores.get('subscales', {}).get(code, {}).get('raw'), true) }}{% endfor %}
+          </fieldset>
+        {% endfor %}</div>
+      </div>
+    </details>
+    <section class="panel input-panel preview-panel" aria-labelledby="preview-title">
+      <div class="panel-heading"><h2 id="preview-title">분류 미리보기</h2><button class="button secondary small" type="submit" formaction="{{ url_for('web.edit_report', report_id=report.id) if report.id else url_for('web.edit_report') }}" name="preview_only" value="1">미리보기 갱신</button></div>
+      <p id="preview-status" role="status">{{ '입력 오류를 수정하면 미리보기를 표시합니다.' if errors else '현재 입력 기준 · 아직 저장하지 않은 변경은 미리보기에만 반영됩니다.' }}</p>
+      <div id="classification-preview">{% if report.types %}{% with report = dict(report, body='') %}{% include 'score_summary.html' %}{% endwith %}{% endif %}</div>
+    </section>
+    <p data-score-save-status role="status">{{ errors.get("save", "") }}</p>
+    <div class="form-bottom"><a class="button secondary" href="{{ url_for('web.dashboard') }}">대시보드로</a><div class="candidate-actions"><button class="button secondary" type="submit" name="destination" value="dashboard">{{ icon('check', 18) }} 저장하고 대시보드로</button><button class="button primary" type="submit" name="destination" value="candidates">저장하고 해석 보기</button></div></div>
+  </form>
+</main>
+<script src="{{ url_for('static', filename='score_save.js') }}" defer></script>
+{% endblock %}

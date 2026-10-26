@@ -1,0 +1,21 @@
+<h2>선택문 편집</h2><p class="settings-note">선택문·직접 의견·현재 기준을 함께 저장합니다. 모드 전환만으로 기존 문장을 지우지 않습니다.</p>
+{% set ns = namespace(seen=[]) %}
+{% for section in composition.sections.values() %}{% for block in section.blocks if block.selection %}{% set group = block.selection.topic ~ '/' ~ block.selection.group %}{% if group not in ns.seen %}{% set ns.seen = ns.seen + [group] %}
+<label>{{ topics[block.selection.topic] }} · 선택 묶음 {{ block.selection.group }}<select name="group_mode_{{ group }}">{% for mode, label in [('multiple','여러 개 선택'),('single','하나 선택')] %}<option value="{{ mode }}" {% if composition.group_modes.get(group,'multiple') == mode %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+{% endif %}{% endfor %}{% endfor %}
+{% for key, label in sections.items() %}{% set section = composition.sections[key] %}
+<details class="composition-section" data-section="{{ key }}" {% if loop.first or section.blocks or section.opinion %}open{% endif %}>
+<summary>{{ label }} · {{ section.blocks|length }}개</summary>
+{% for block in section.blocks %}{% set flags = block_status.get(block.id, {}) %}
+<article class="selected-block" data-block="{{ block.id }}"><p class="block-flags">{{ '추가 참고 · ' if flags.reference }}{{ '이전 기준에서 선택 · ' if flags.previous }}{{ '현재 적용 조건과 다름 · ' if flags.mismatch }}{{ '자료 변경 또는 사용 불가 · ' if flags.changed }}</p>
+<p class="settings-note">{% if block.selection %}{{ topics[block.selection.topic] }} · 선택 묶음 {{ block.selection.group }} · 대표 관계 {{ relations[block.selection.relation] }}{% else %}선택 묶음 미확인 · 자동 교체 대상 제외{% endif %}</p>
+<label>보고서 반영 위치<select name="position_{{ block.id }}">{% for target, label in sections.items() %}<option value="{{ target }}" {% if target == key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+<button name="action" value="compare">반영 위치 적용</button>
+<label>선택문 편집<textarea rows="4" name="text_{{ block.id }}">{{ block.text }}</textarea></label>
+<div class="block-actions">{% for action, label in [('up','위로'),('down','아래로'),('remove','제외')] %}<button type="submit" name="action" value="{{ action }}:{{ block.id }}">{{ label }}</button>{% endfor %}</div>
+<details class="block-evidence"><summary>선택 당시 문장·출처·기준 보기</summary><p>{{ block.evidence.description }}</p>
+{% for member in block.evidence.members %}<p>출처: {{ member.source.title }} · {{ member.item.location }} · 항목 #{{ member.item.id }} · 검사판 {{ member.item.edition }} / {{ member.source.edition }}</p><p>파일: {{ member.source.filename }} / {{ member.source.alternate_filename }} · 적용 범위: {{ member.item.scope }} / {{ member.source.scope }}</p><p>{{ member.reasons|join(' · ') }} {{ member.item.conflict }}</p><p>원문: {{ member.item.original }}</p><p>조건: {{ member.item.conditions|tojson }} · 원래 기준 {{ member.item.original_criteria }}</p>{% if member.item.selection %}<p>설명 관계: {{ relations[member.item.selection.relation] }}</p><p>연결 근거: {{ member.item.selection.basis }}</p>{% endif %}{% endfor %}
+<p>선택 당시 기준: {{ block.evidence.settings|tojson }}</p><p>선택 당시 점수: {{ block.evidence.scores|tojson }}</p><p data-current-settings>현재 기준: {{ report.settings|tojson }}</p><p data-current-scores>현재 점수: {{ report.scores|tojson }}</p></details>
+<p class="selected-preview" hidden>{{ block.text }}</p></article>{% endfor %}
+<label>직접 의견<textarea rows="3" name="opinion_{{ key }}">{{ section.opinion }}</textarea></label><p class="opinion-preview" hidden>{{ section.opinion }}</p>
+</details>{% endfor %}
