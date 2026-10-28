@@ -13,6 +13,7 @@ from .db import get_engine, reports, utc_now
 from .library import FAMILIES, SECTIONS, context
 from .scores import SCALES, parse_settings, profile_rows, report_types
 from .views import find_report
+from .permissions import owner_condition
 
 
 def context_token(report, saved):
@@ -150,7 +151,7 @@ def handle(report_id):
                 stamp = utc_now()
                 # 조회 이후 다른 저장이 먼저 커밋됐다면 오래된 요청으로 덮어쓰지 않는다.
                 result = connection.execute(reports.update().where(
-                    reports.c.id == report_id, reports.c.updated_at == saved['updated_at']).values(
+                    reports.c.id == report_id, owner_condition(reports), reports.c.updated_at == saved['updated_at']).values(
                     settings=settings, composition=report['composition'], updated_at=stamp))
                 if result.rowcount != 1:
                     raise ValueError('검사 기록이 먼저 변경되었습니다. 현재 편집문을 유지하고 저장본을 확인해 주세요.')

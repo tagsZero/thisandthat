@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}통합 대시보드{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{{ url_for('static', filename='account.css') }}">{% endblock %}
 {% block content %}
 <main class="page portal-page">
   <div class="page-heading"><div><div class="eyebrow">나의 작업 공간</div><h1>통합 대시보드</h1><p class="muted">오늘의 작업을 시작할 프로그램을 선택하세요.</p></div></div>
@@ -10,6 +11,10 @@
   <section class="program-card" style="margin-top:24px">
     <div class="program-copy"><span class="pill subtle">그림 · 관찰 기록</span><div class="program-title"><h2>K-HTP</h2><span>보이는 표현 관찰</span></div><p>그림을 올리고 관찰 초안을 확인하세요.<br>필요한 부분을 수정한 뒤 PDF로 받을 수 있습니다.</p><a class="button primary" href="{{ url_for('khtp.index') }}">K-HTP 열기 {{ icon('arrow') }}</a></div>
   </section>
-  <div class="portal-note">{{ icon('file') }}<p>최근 검사 결과와 일정은 <strong>TCI 대시보드</strong>에서 확인할 수 있습니다.</p></div>
+  <div class="account-portal-panels">
+    {% include 'schedule_panel.html' %}
+    <section class="panel account-panel" aria-labelledby="shared-title"><h2 id="shared-title">공유받은 검사 <span class="count">{{ shared_records|length }}</span></h2><p class="muted">현재 저장된 결과를 읽고 댓글을 남길 수 있습니다.</p>
+    <div class="account-list">{% for record in shared_records %}<article class="account-list-item"><div><span class="pill subtle">{{ 'TCI' if record.kind == 'tci' else 'K-HTP' }}</span><h3>{{ record.name or record.reference or '대상 미입력' }}</h3><p>{{ record.reference or '' }} · 검사일 {{ record.exam_date or '미입력' }}</p><p class="muted">공유한 계정 {{ record.owner_username }} · {{ record.updated_at|local_datetime }}</p></div><a class="button secondary small" href="{{ url_for('collaboration.detail',kind=record.kind,exam_id=record.id) }}">저장본 열람</a></article>{% else %}<p class="muted">공유받은 검사가 없습니다.</p>{% endfor %}</div></section>
+  </div>
 </main>
 {% endblock %}

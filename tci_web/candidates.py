@@ -16,6 +16,7 @@ from .library import EDITIONS, FAMILIES, MAIN, METRICS, SECTIONS, STATUS, contex
 from .scores import SCALES, parse_settings, report_types, profile_rows
 from .selection import TOPICS, group_id, item_topic
 from .views import find_report
+from .permissions import owner_condition
 
 bp = Blueprint('candidates', __name__)
 
@@ -281,7 +282,7 @@ def index(report_id):
             try:
                 with get_engine().begin() as connection:
                     comp.material_status(connection, value, report, validate_new=True)
-                    connection.execute(reports.update().where(reports.c.id == report_id).values(
+                    connection.execute(reports.update().where(reports.c.id == report_id, owner_condition(reports)).values(
                         settings=settings, composition=value, updated_at=utc_now()))
                 message = '현재 해석·기준을 저장했습니다.'
                 save_state = 'saved'

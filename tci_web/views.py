@@ -2,13 +2,15 @@ from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
-from sqlalchemy import func, or_, select, text
+from sqlalchemy import String, and_, cast, func, literal, or_, select, text, union_all
 from sqlalchemy.exc import SQLAlchemyError
 
 from .auth import login_required
 from .composition import initial, material_status
 from .library import SECTIONS
-from .db import appointments, get_engine, reports, utc_now
+from .db import appointments, get_engine, reports, users, utc_now
+from .permissions import check_csrf, csrf_token, get_exam, owner_condition, readable_condition
+from .account_schema import exam_shares
 from .exam_history import load_history, reference_key
 from .scores import DEFAULT_SETTINGS, SCALES, SUBSCALES, parse_scores, parse_settings, report_types
 
@@ -25,11 +27,9 @@ def today():
 
 
 def find_report(report_id):
+    """Original editor routes require ownership; grants use the common read view."""
     with get_engine().connect() as connection:
-        report = connection.execute(select(reports).where(reports.c.id == report_id)).mappings().first()
-    if report is None:
-        abort(404)
-    return dict(report)
+        return get_exam(connection, "tci", report_id, write=True)
 
 
 @bp.get("/")
@@ -40,7 +40,50 @@ def index():
 @bp.get("/dashboard")
 @login_required
 def portal():
-    return render_template("portal.html", active="portal")
+    from khtp_web import jobs
+
+    period = "week" if request.args.get("period") == "week" else "today"
+    current_day = today()
+    start = current_day - timedelta(days=current_day.weekday()) if period == "week" else current_day
+    end = start + timedelta(days=7 if period == "week" else 1)
+    with get_engine().connect() as connection:
+        joined = appointments.outerjoin(reports, and_(appointments.c.report_id == reports.c.id,
+                                                     readable_condition(reports, "tci")))
+        rows = connection.execute(select(appointments, reports.c.id.label("visible_report_id"),
+            reports.c.name.label("report_name"), reports.c.reference.label("report_reference"))
+            .select_from(joined).where(owner_condition(appointments), appointments.c.day >= start,
+                                      appointments.c.day < end)
+            .order_by(appointments.c.day, appointments.c.time, appointments.c.id)).mappings().all()
+        events = [dict(row) for row in rows]
+        for event in events:
+            if event.pop("visible_report_id") is None:
+                event["report_id"] = None
+        choices = connection.execute(select(reports.c.id, reports.c.name, reports.c.reference, reports.c.exam_date)
+            .where(readable_condition(reports, "tci")).order_by(reports.c.updated_at.desc(), reports.c.id.desc())).mappings().all()
+        editing = None
+        editing_id = request.args.get("edit", type=int)
+        if editing_id:
+            editing = connection.execute(select(appointments).where(appointments.c.id == editing_id,
+                                           owner_condition(appointments))).mappings().first()
+            if editing is None:
+                abort(404)
+            editing = dict(editing)
+            if editing["report_id"] is not None and not connection.scalar(select(reports.c.id).where(
+                reports.c.id == editing["report_id"], readable_condition(reports, "tci"))):
+                editing["report_id"] = None
+        def shared_summary(table, kind, stamp, key):
+            return select(cast(table.c.id, String).label("id"), literal(kind).label("kind"), table.c.name,
+                          table.c.reference, table.c.exam_date, users.c.username.label("owner_username"),
+                          stamp.label("updated_at")).select_from(table.join(users, users.c.id == table.c.owner_id)
+                          .join(exam_shares, key == table.c.id)).where(
+                          exam_shares.c.recipient_id == g.user["id"], table.c.owner_id != g.user["id"])
+        combined = union_all(shared_summary(reports, "tci", reports.c.updated_at, exam_shares.c.report_id),
+                             shared_summary(jobs, "khtp", jobs.c.last_used, exam_shares.c.job_id)).subquery()
+        shared_records = connection.execute(select(combined).order_by(combined.c.updated_at.desc(),
+                                                  combined.c.kind, combined.c.id)).mappings().all()
+    return render_template("portal.html", active="portal", today=current_day, period=period,
+                           events=events, editing=editing, choices=choices, shared_records=shared_records,
+                           account_csrf=csrf_token())
 
 
 @bp.get("/tci")
@@ -52,10 +95,7 @@ def dashboard():
     except ValueError:
         page = 1
     period = "week" if request.args.get("period") == "week" else "today"
-    current_day = today()
-    start = current_day - timedelta(days=current_day.weekday()) if period == "week" else current_day
-    end = start + timedelta(days=7 if period == "week" else 1)
-    criteria = []
+    criteria = [readable_condition(reports, "tci")]
     if query:
         escaped = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         match = f"%{escaped}%"
@@ -66,29 +106,17 @@ def dashboard():
             pass
         criteria.append(or_(*choices))
     with get_engine().connect() as connection:
-        total = connection.scalar(select(func.count()).select_from(reports))
+        total = connection.scalar(select(func.count()).select_from(reports).where(readable_condition(reports, "tci")))
         matched = connection.scalar(select(func.count()).select_from(reports).where(*criteria))
         pages = max(1, (matched + 9) // 10)
         page = min(page, pages)
         records = [dict(row) for row in connection.execute(
-            select(reports).where(*criteria).order_by(reports.c.updated_at.desc(), reports.c.id.desc())
+            select(reports, users.c.username.label("owner_username")).join(users, users.c.id == reports.c.owner_id)
+            .where(*criteria).order_by(reports.c.updated_at.desc(), reports.c.id.desc())
             .limit(10).offset((page - 1) * 10)
         ).mappings()]
-        events = connection.execute(
-            select(appointments, reports.c.name.label("report_name"), reports.c.reference.label("report_reference"))
-            .outerjoin(reports, appointments.c.report_id == reports.c.id)
-            .where(appointments.c.day >= start, appointments.c.day < end)
-            .order_by(appointments.c.day, appointments.c.time, appointments.c.id)
-        ).mappings().all()
-        choices = connection.execute(select(reports.c.id, reports.c.name, reports.c.reference, reports.c.exam_date)
-                                     .order_by(reports.c.updated_at.desc())).mappings().all()
-        editing = None
-        editing_id = request.args.get("edit", type=int)
-        if editing_id:
-            editing = connection.execute(select(appointments).where(appointments.c.id == editing_id)).mappings().first()
-            if editing is None:
-                abort(404)
     for record in records:
+        record['is_owner'] = record['owner_id'] == g.user['id']
         record['has_history_reference'] = bool(reference_key(record['reference']))
         record["types"] = report_types(record["scores"], record["settings"])
         record["composition_view"] = initial(record)
@@ -99,8 +127,7 @@ def dashboard():
             record["block_status"] = material_status(connection, record["composition_view"], record)
     history = load_history('TCI', 'web.dashboard', dict(q=query, page=page, period=period))
     return render_template("tci_dashboard.html", active="tci", records=records, total=total, history=history,
-                           matched=matched, query=query, page=page, pages=pages, events=events,
-                           period=period, today=current_day, choices=choices, editing=editing, scales=SCALES)
+                           matched=matched, query=query, page=page, pages=pages, period=period, scales=SCALES)
 
 
 @bp.route("/tci/reports/new", methods=["GET", "POST"])
@@ -137,12 +164,12 @@ def edit_report(report_id=None):
             try:
                 with get_engine().begin() as connection:
                     if report_id is None:
-                        report_id = connection.execute(reports.insert().values(**values, body="")).inserted_primary_key[0]
+                        report_id = connection.execute(reports.insert().values(**values, owner_id=g.user["id"], body="")).inserted_primary_key[0]
                     else:
-                        connection.execute(reports.update().where(reports.c.id == report_id).values(**values))
+                        connection.execute(reports.update().where(reports.c.id == report_id, owner_condition(reports)).values(**values))
                     if new_entry:
                         from .type_report import new_draft
-                        saved_entry = dict(connection.execute(select(reports).where(reports.c.id == report_id)).mappings().one())
+                        saved_entry = dict(connection.execute(select(reports).where(reports.c.id == report_id, owner_condition(reports))).mappings().one())
                         draft = new_draft(connection, saved_entry, new_score_entry=True)['report']
             except SQLAlchemyError:
                 errors['save'] = '저장하지 못했습니다. 입력은 유지됩니다. 다시 시도해 주세요.'
@@ -200,6 +227,7 @@ def review_report(report_id):
 @bp.post("/tci/appointments/<int:event_id>")
 @login_required
 def save_appointment(event_id=None):
+    check_csrf()
     try:
         day = date.fromisoformat(request.form.get("day", ""))
         event_time = datetime.strptime(request.form.get("time", ""), "%H:%M").time()
@@ -209,30 +237,34 @@ def save_appointment(event_id=None):
         report_id = request.form.get("report_id", "")
         report_id = int(report_id) if report_id else None
         if report_id is not None:
-            find_report(report_id)
+            with get_engine().connect() as connection:
+                get_exam(connection, "tci", report_id)
     except ValueError:
         flash("일정의 날짜·시간·제목을 확인해 주세요.", "error")
-        return redirect(url_for("web.dashboard", period=request.form.get("period", "today")) + "#schedule")
+        return redirect(url_for("web.portal", period=request.form.get("period", "today")) + "#schedule")
     with get_engine().begin() as connection:
+        if report_id is not None:
+            get_exam(connection, "tci", report_id, lock=True)
         values = dict(day=day, time=event_time, title=title, note=request.form.get("note", "").strip(), report_id=report_id)
         if event_id is None:
-            connection.execute(appointments.insert().values(**values))
+            connection.execute(appointments.insert().values(**values, owner_id=g.user["id"]))
         else:
-            result = connection.execute(appointments.update().where(appointments.c.id == event_id).values(**values))
+            result = connection.execute(appointments.update().where(appointments.c.id == event_id, owner_condition(appointments)).values(**values))
             if result.rowcount == 0:
                 abort(404)
     flash("일정을 저장했습니다.", "success")
-    return redirect(url_for("web.dashboard", period=request.form.get("period", "today")) + "#schedule")
+    return redirect(url_for("web.portal", period=request.form.get("period", "today")) + "#schedule")
 
 
 @bp.post("/tci/appointments/<int:event_id>/delete")
 @login_required
 def delete_appointment(event_id):
+    check_csrf()
     with get_engine().begin() as connection:
-        if connection.execute(appointments.delete().where(appointments.c.id == event_id)).rowcount == 0:
+        if connection.execute(appointments.delete().where(appointments.c.id == event_id, owner_condition(appointments))).rowcount == 0:
             abort(404)
     flash("일정을 삭제했습니다.", "success")
-    return redirect(url_for("web.dashboard", period=request.form.get("period", "today")) + "#schedule")
+    return redirect(url_for("web.portal", period=request.form.get("period", "today")) + "#schedule")
 
 
 @bp.get("/health/db")

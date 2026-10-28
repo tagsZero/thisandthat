@@ -4,7 +4,7 @@ import click
 from flask import current_app
 from sqlalchemy import (
     JSON, Boolean, Column, Date, DateTime, ForeignKey, Integer, MetaData,
-    String, Table, Text, Time, select, inspect, text,
+    String, Table, Text, Time, Index, select, inspect, text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from werkzeug.security import generate_password_hash
@@ -26,6 +26,7 @@ users = Table(
 reports = Table(
     "reports", metadata,
     Column("id", Integer, primary_key=True),
+    Column("owner_id", ForeignKey("users.id"), nullable=True),
     Column("name", String(100), nullable=False, default=""),
     Column("reference", String(100), nullable=False, default=""),
     Column("exam_date", Date),
@@ -39,12 +40,15 @@ reports = Table(
 appointments = Table(
     "appointments", metadata,
     Column("id", Integer, primary_key=True),
+    Column("owner_id", ForeignKey("users.id"), nullable=True),
     Column("day", Date, nullable=False),
     Column("time", Time, nullable=False),
     Column("title", String(120), nullable=False),
     Column("note", Text, nullable=False, default=""),
     Column("report_id", ForeignKey("reports.id"), nullable=True),
 )
+Index("ix_reports_owner_updated_id", reports.c.owner_id, reports.c.updated_at.desc(), reports.c.id.desc())
+Index("ix_appointments_owner_day_time", appointments.c.owner_id, appointments.c.day, appointments.c.time)
 
 sources = Table(
     "interpretation_sources", metadata,
@@ -88,7 +92,87 @@ def get_engine():
     return current_app.extensions["db_engine"]
 
 
+def upgrade_privacy(connection):
+    """Explicit, additive preparation. Legacy rows deliberately remain unowned."""
+    from . import account_schema  # register the shared tables without startup DDL
+
+    inspector = inspect(connection)
+    existing = set(inspector.get_table_names())
+    if connection.dialect.name == "postgresql":
+        names = [name for name in ("reports", "appointments") if name in existing]
+        if names:
+            connection.execute(text("LOCK TABLE " + ", ".join(names) + " IN ACCESS EXCLUSIVE MODE"))
+    changed = []
+    for table in (reports, appointments):
+        if table.name in existing:
+            columns = {column["name"] for column in inspect(connection).get_columns(table.name)}
+            if "owner_id" not in columns:
+                connection.execute(text(f"ALTER TABLE {table.name} ADD COLUMN owner_id INTEGER REFERENCES users(id)"))
+                changed.append(table.name + ".owner_id")
+    metadata.create_all(connection)
+    for table in (reports, appointments):
+        for index in table.indexes:
+            index.create(connection, checkfirst=True)
+    return changed
+
+
 def init_app(app):
+    @app.cli.command("upgrade-privacy")
+    def upgrade_privacy_command():
+        """계정 컬럼과 공유/댓글 구조만 준비한다. 기존 소유자는 추측하지 않는다."""
+        with get_engine().begin() as connection:
+            changed = upgrade_privacy(connection)
+        click.echo("계정/공유 구조 준비 완료 · 기존 자료는 미귀속 유지" + (" · " + ", ".join(changed) if changed else " · 반복 적용 변경 없음"))
+
+    @app.cli.command("assign-legacy-owner")
+    @click.option("--username", required=True)
+    @click.option("--report-id", "report_ids", multiple=True, type=click.IntRange(min=1))
+    @click.option("--appointment-id", "appointment_ids", multiple=True, type=click.IntRange(min=1))
+    @click.option("--all-unassigned", is_flag=True, help="명시 계정에 모든 미귀속 검사/일정 귀속")
+    @click.option("--apply", "apply_changes", is_flag=True, help="지정한 미귀속 행만 실제 귀속")
+    def assign_legacy_owner(username, report_ids, appointment_ids, all_unassigned, apply_changes):
+        """기본은 점검. 다른 계정의 소유권이나 본문/점수는 변경하지 않는다."""
+        from .permissions import readable_condition
+
+        if all_unassigned and (report_ids or appointment_ids):
+            raise click.ClickException("--all-unassigned는 개별 ID 옵션과 함께 사용할 수 없습니다.")
+        if not all_unassigned and not report_ids and not appointment_ids:
+            raise click.ClickException("--report-id, --appointment-id 또는 --all-unassigned를 명시해 주세요.")
+        with get_engine().begin() as connection:
+            account_id = connection.scalar(select(users.c.id).where(users.c.username == username.strip()))
+            if account_id is None:
+                raise click.ClickException("존재하지 않는 로그인 아이디입니다.")
+            targets = []
+            for table, identifiers in ((reports, set(report_ids)), (appointments, set(appointment_ids))):
+                if not all_unassigned and not identifiers:
+                    continue
+                predicate = table.c.owner_id.is_(None) if all_unassigned else table.c.id.in_(identifiers)
+                statement = select(table).where(predicate).order_by(table.c.id)
+                if apply_changes:
+                    statement = statement.with_for_update()
+                rows = connection.execute(statement).mappings().all()
+                if not all_unassigned and len(rows) != len(identifiers):
+                    raise click.ClickException(f"없는 {table.name} ID가 포함되어 있습니다. 전체 작업을 취소했습니다.")
+                if any(row["owner_id"] not in (None, account_id) for row in rows):
+                    raise click.ClickException("다른 계정에 귀속된 자료는 변경할 수 없습니다. 전체 작업을 취소했습니다.")
+                targets.extend((table, row) for row in rows)
+            claimed_reports = {row["id"] for table, row in targets if table is reports}
+            for table, row in targets:
+                if table is appointments and row["report_id"] is not None and row["report_id"] not in claimed_reports:
+                    allowed = connection.scalar(select(reports.c.id).where(
+                        reports.c.id == row["report_id"], readable_condition(reports, "tci", account_id)))
+                    if allowed is None:
+                        raise click.ClickException("일정의 연결 검사에도 이 계정의 소유권 또는 공유 권한이 필요합니다.")
+            pending = [(table, row) for table, row in targets if row["owner_id"] is None]
+            if apply_changes:
+                for table, row in pending:
+                    result = connection.execute(table.update().where(table.c.id == row["id"], table.c.owner_id.is_(None))
+                                                .values(owner_id=account_id))
+                    if result.rowcount != 1:
+                        raise click.ClickException("점검 중 소유권이 변경되어 전체 작업을 취소했습니다.")
+            click.echo(("귀속 완료" if apply_changes else "점검 전용 · 실제 변경 없음") +
+                       f" · 대상 {len(targets)}건 · 미귀속 {len(pending)}건 · 기존 본문/점수 보존")
+
     @app.cli.command("upgrade-selection")
     def upgrade_selection_command():
         """해석 연결 컬럼만 추가한다. 기존 자료·보고서 행은 변경하지 않는다."""

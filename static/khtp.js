@@ -59,6 +59,17 @@
     }
     return {response,data};
   }
+  function syncShareLink() {
+    const link=$('share');
+    root.dataset.jobId=job?.id || '';
+    if(job) {
+      link.href=link.dataset.urlTemplate.replace('__job_id__',encodeURIComponent(job.id));
+      link.hidden=false;
+    } else {
+      link.hidden=true;
+      link.removeAttribute('href');
+    }
+  }
   function adopt(fresh, captured = {}, capturedSubject = {}) {
     const currentSubject=readSubject(),pendingSubject={};
     for(const key of Object.keys(subjectDirty))if(subjectDirty[key]!==capturedSubject[key])pendingSubject[key]=subjectDirty[key];
@@ -69,6 +80,7 @@
       if (dirty[id] !== captured[id]) pending[id] = {version:dirty[id],value:clone(job.observations[id])};
     }
     job = fresh; dirty = {};
+    syncShareLink();
     for (const [id,entry] of Object.entries(pending)) { job.observations[id] = entry.value; dirty[id] = entry.version; }
     // A newer local edit must not restore a parent removed by reanalysis.
     const parents=new Set(['O2.1','O2.2','O2.3','O3.3'].flatMap(id=>job.observations[id].regions.map(region=>region.id)));
@@ -252,6 +264,7 @@
   $('new').addEventListener('click',()=>{
     if(isDirty()&&!confirm('저장하지 않은 수정이 있습니다. 다른 그림을 선택하시겠습니까?'))return;
     job=null;dirty={};subjectDirty={};selected=null;
+    syncShareLink();
     root.dataset.jobId='';history.replaceState(null,'','/khtp/new');
     for(const key of subjectFields)$(key).value=key==='exam_date'?new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()):'';
     $('upload').hidden=false;$('work').hidden=true;$('pdf').hidden=true;$('sources').hidden=true;

@@ -1,0 +1,38 @@
+/* Account portal, readable exam details and account-aware record actions. */
+.portal-page .program-card{display:flex;flex-wrap:wrap}
+.portal-page .program-copy{flex:1 1 360px;min-width:0}
+.portal-page .program-visual{flex:1 1 300px;min-width:0}
+.account-portal-panels{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;margin-top:28px}
+.account-portal-panels>.schedule-column{flex:1 1 340px;min-width:0}
+.account-portal-panels>.account-panel{flex:1.4 1 420px;min-width:0;margin:0}
+.portal-page .two-fields{display:flex;flex-wrap:wrap;gap:12px}
+.portal-page .two-fields>label{flex:1 1 130px;min-width:0}
+.portal-page .event-main{min-width:0}
+.portal-page .event-form input,.portal-page .event-form select,.portal-page .event-form textarea{min-width:0;max-width:100%}
+.account-panel{padding:24px;margin:24px 0;min-width:0}
+.account-panel h2{margin:0 0 14px}.account-panel h3{margin:8px 0}
+.account-list,.account-comments{display:flex;flex-direction:column;gap:16px;margin-top:18px}
+.account-list-item{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:16px}
+.account-list-item>div{flex:1 1 200px;min-width:0}.account-list-item p{margin:7px 0}
+.account-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:20px 0}
+.account-notice{background:#edf2e9;border-left:3px solid #7b9474;padding:14px 18px;border-radius:4px}
+.account-error{padding:14px;border:1px solid #b5584c;background:#fff4ef;border-radius:6px;color:#823b32}
+.account-detail,.account-portal-panels,.account-records,.account-record-owner{overflow-wrap:anywhere}
+.account-detail .page-heading>div{min-width:0}
+.account-form{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px;margin:18px 0}
+.account-form label{display:flex;flex-direction:column;gap:8px;flex:1 1 230px;min-width:0;font-size:13px}
+.account-form input,.account-form select,.account-form textarea{width:100%;min-width:0;max-width:100%;border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:#fff;font:inherit;color:inherit}
+.account-form textarea{resize:vertical;min-height:90px}.account-note-form{flex-direction:column;align-items:stretch}.account-note-form label{flex:auto}
+.account-note-form>button{align-self:flex-start}.account-comment{border-top:1px solid var(--line);padding-top:20px}
+.account-comment-heading{display:flex;flex-wrap:wrap;align-items:center;gap:10px}.account-prose{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8}
+.account-delete{margin-top:12px}.account-detail details>summary{cursor:pointer;color:var(--accent);padding:8px 0}
+.account-drawing{display:block;width:auto;max-width:100%;max-height:620px;margin:24px auto;object-fit:contain}
+.account-observation-group{margin-top:28px}.account-observation{border-top:1px solid var(--line);padding:14px 0}
+.account-detail .profile-row{display:flex;flex-wrap:wrap;gap:20px}.account-detail .profile-label{flex:1 1 200px;min-width:0}.account-detail .profile-plot{flex:1.1 1 180px;min-width:0}.account-detail .profile-value{flex:0 1 95px}
+.account-detail .report-subscales{display:flex;flex-wrap:wrap;gap:12px}.account-detail .report-subscales>p{flex:1 1 260px;min-width:0}
+.account-detail .report-paper{min-width:0}.account-detail .table-scroll{max-width:100%;overflow-x:auto}
+.account-records .dashboard-grid{display:flex;flex-direction:column}.account-records .records-panel{width:100%;min-width:0}
+.account-records .record-actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px}.account-records .record-actions .quick-review{flex:1 1 220px}.account-records .record-actions .continue-link{position:static}
+.account-records .record-grid,.account-records .records-labels{display:flex;flex-wrap:wrap;gap:12px}.account-records .record-grid>*,.account-records .records-labels>*{flex:1 1 110px;min-width:0}.account-records .record-grid>.record-person,.account-records .records-labels>:first-child{flex:1.5 1 220px}
+.account-record-owner{display:block;color:var(--muted);font-size:12px;margin-top:6px}
+@media(max-width:600px){.account-panel{padding:18px}.account-portal-panels{gap:18px}.account-detail .report-paper{padding:22px 16px}.account-detail .profile-row{flex-direction:column;align-items:stretch}.account-detail .profile-label,.account-detail .profile-plot,.account-detail .profile-value{flex:auto}.account-detail .profile-plot{width:100%}.account-records .records-labels{display:none}.account-actions .button{white-space:normal;text-align:center}.account-portal-panels>.schedule-column,.account-portal-panels>.account-panel{flex-basis:100%}.portal-page .program-copy{padding:26px 22px}.account-form>button{max-width:100%;white-space:normal}.account-detail .report-heading h1{font-size:28px}.account-comment-heading .pill{white-space:normal}}

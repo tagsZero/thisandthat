@@ -1,12 +1,95 @@
 from functools import wraps
+import secrets
 
-from flask import Blueprint, g, redirect, render_template, request, session, url_for
+from flask import Blueprint, current_app, flash, g, redirect, render_template, request, session, url_for
 from sqlalchemy import select
-from werkzeug.security import check_password_hash
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from .db import get_engine, users
 
 bp = Blueprint("auth", __name__)
+
+
+def registration_errors(username, password, confirmation):
+    errors = {}
+    if not username or len(username) > 80:
+        errors["username"] = "아이디는 1~80자로 입력해 주세요."
+    elif not username.isprintable() or any(char.isspace() for char in username):
+        errors["username"] = "아이디에는 공백이나 제어문자를 사용할 수 없습니다."
+    if not 8 <= len(password) <= 128 or not password.strip():
+        errors["password"] = "비밀번호는 공백만 사용하지 않고 8~128자로 입력해 주세요."
+    if password != confirmation:
+        errors["password_confirm"] = "비밀번호가 일치하지 않습니다."
+    elif not confirmation:
+        errors["password_confirm"] = "비밀번호 확인을 입력해 주세요."
+    return errors
+
+
+@bp.route("/register", methods=["GET", "POST"])
+def register():
+    if g.user:
+        return redirect(url_for("web.portal"))
+
+    request.max_content_length = 16 * 1024
+    token = session.get("registration_csrf")
+    if not isinstance(token, str) or not token:
+        token = secrets.token_urlsafe(32)
+        session["registration_csrf"] = token
+    invite = current_app.config.get("REGISTRATION_INVITE_CODE") or ""
+    registration_enabled = bool(invite) or current_app.config.get("REGISTRATION_OPEN", False)
+    username, errors, status = "", {}, 200
+    if not registration_enabled:
+        errors["form"] = "현재는 회원가입을 받지 않습니다. 가입 안내를 확인해 주세요."
+
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        confirmation = request.form.get("password_confirm", "")
+        supplied_token = request.form.get("csrf_token", "")
+        if not registration_enabled:
+            status = 503
+        elif not secrets.compare_digest(token.encode("utf-8"), supplied_token.encode("utf-8")):
+            errors["form"] = "가입 화면이 만료되었습니다. 아래 내용을 다시 입력해 주세요."
+            status = 403
+        else:
+            errors = registration_errors(username, password, confirmation)
+            if invite and not secrets.compare_digest(
+                invite.encode("utf-8"), request.form.get("invite_code", "").encode("utf-8")
+            ):
+                errors["invite_code"] = "초대 코드를 확인해 주세요."
+            if errors:
+                status = 422
+            else:
+                try:
+                    with get_engine().begin() as connection:
+                        if connection.execute(select(users.c.id).where(users.c.username == username)).first():
+                            errors["username"] = "이미 사용 중인 아이디입니다."
+                        else:
+                            connection.execute(users.insert().values(
+                                username=username, password_hash=generate_password_hash(password),
+                            ))
+                except IntegrityError:
+                    # The unique constraint also protects simultaneous registrations.
+                    errors["username"] = "이미 사용 중인 아이디입니다."
+                except SQLAlchemyError:
+                    current_app.logger.warning("Registration database operation failed")
+                    errors["form"] = "가입 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요."
+                    status = 503
+                if errors:
+                    if status == 200:
+                        status = 409
+                else:
+                    session.pop("registration_csrf", None)
+                    flash("회원가입이 완료되었습니다. 새 계정으로 로그인해 주세요.", "success")
+                    return redirect(url_for("auth.login"), code=303)
+
+    response = current_app.make_response((render_template(
+        "register.html", username=username, errors=errors, csrf_token=token,
+        invite_required=bool(invite), registration_enabled=registration_enabled,
+    ), status))
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @bp.before_app_request

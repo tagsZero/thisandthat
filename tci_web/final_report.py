@@ -13,6 +13,7 @@ from .library import SECTIONS
 from .selection import RELATIONS
 from .scores import report_types, profile_rows
 from .views import find_report
+from .permissions import owner_condition
 
 bp = Blueprint('final_report', __name__)
 
@@ -78,14 +79,14 @@ def show(report_id):
         try:
             with get_engine().begin() as connection:
                 # 출력 설정만 변경한다. 동시에 저장된 본문·점수·기준을 덮어쓰지 않는다.
-                fresh = connection.execute(select(reports).where(reports.c.id == report_id)
+                fresh = connection.execute(select(reports).where(reports.c.id == report_id, owner_condition(reports))
                                            .with_for_update()).mappings().first()
                 if fresh is None:
                     abort(404)
                 value = comp.initial(dict(fresh))
                 comp.decode(json.dumps(value), dict(fresh))
                 value['output'] = options
-                connection.execute(reports.update().where(reports.c.id == report_id).values(
+                connection.execute(reports.update().where(reports.c.id == report_id, owner_condition(reports)).values(
                     composition=value, updated_at=utc_now()))
         except SQLAlchemyError:
             return failure('표시 설정을 저장하지 못했습니다. 선택한 설정을 유지했습니다.',

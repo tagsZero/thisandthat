@@ -3,7 +3,7 @@
 {% block content %}
 <main class="page report-page">
   {% with step=3 %}{% include 'report_steps.html' %}{% endwith %}
-<nav class="report-navigation" aria-label="보고서 이동"><a href="{{ url_for('web.dashboard') }}">{{ icon('back', 16) }} TCI 대시보드</a><a class="button secondary" href="{{ url_for('candidates.index', report_id=report.id) }}">해석 편집으로</a><button class="button primary" form="report-output" name="action" value="pdf" formaction="{{ url_for('pdf_export.save_output', report_id=report.id) }}">저장 후 PDF 다운로드</button></nav>
+<nav class="report-navigation" aria-label="보고서 이동"><a href="{{ url_for('collaboration.detail',kind='tci',exam_id=report.id) }}">저장본 공유·메모</a><a href="{{ url_for('web.dashboard') }}">{{ icon('back', 16) }} TCI 대시보드</a><a class="button secondary" href="{{ url_for('candidates.index', report_id=report.id) }}">해석 편집으로</a><button class="button primary" form="report-output" name="action" value="pdf" formaction="{{ url_for('pdf_export.save_output', report_id=report.id) }}">저장 후 PDF 다운로드</button></nav>
 <details class="report-options panel" {% if preview %}open{% endif %}><summary>추가 영역 표시 설정</summary><form id="report-output" method="post" data-pdf-form data-saved-options='{{ saved_options|tojson }}'>
 <p>포함을 꺼도 작성 내용은 유지됩니다. 미리보기는 저장하지 않습니다.</p>
 {% for key in ['subscales','combined','summary'] %}<label><input type="checkbox" name="include_{{ key }}" value="1" {% if options[key] %}checked{% endif %}>{{ section_labels[key] }}</label>{% endfor %}

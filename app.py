@@ -3,7 +3,7 @@ import secrets
 from pathlib import Path
 
 from dotenv import load_dotenv, set_key
-from flask import Flask
+from flask import Flask, g, request, session
 from sqlalchemy import URL, create_engine
 
 
@@ -16,6 +16,8 @@ def create_app(test_config=None):
         SECRET_KEY=os.environ.get("SECRET_KEY"),
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
+        REGISTRATION_INVITE_CODE=os.environ.get("REGISTRATION_INVITE_CODE", ""),
+        REGISTRATION_OPEN=os.environ.get("REGISTRATION_OPEN", "1").strip().lower() in {"1", "true"},
     )
     if test_config:
         app.config.update(test_config)
@@ -51,6 +53,15 @@ def create_app(test_config=None):
 
     from khtp_web import init_app as init_khtp
     init_khtp(app)
+
+    from tci_web.collaboration import init_app as init_collaboration
+    init_collaboration(app)
+
+    @app.after_request
+    def private_account_response(response):
+        if request.endpoint != "static" and (getattr(g, "user", None) or session.get("user_id")):
+            response.headers["Cache-Control"] = "no-store"
+        return response
 
     @app.template_filter("local_datetime")
     def local_datetime(value):
