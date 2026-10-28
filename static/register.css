@@ -1,0 +1,48 @@
+.register-page { background: #fff; }
+.register-page .register-shell { min-height: 100vh; display: flex; }
+.register-page .register-story { flex: 0 0 42%; min-width: 0; display: flex; flex-direction: column; padding: 48px 52px 32px; color: #f3f5ed; background: #304c41; }
+.register-page .register-brand { align-self: flex-start; font-size: 29px; font-weight: 750; line-height: 1.2; letter-spacing: -.08em; }
+.register-page .register-brand span { color: #bad0a7; }
+.register-page .register-story-copy { display: flex; flex: 1; flex-direction: column; justify-content: center; padding: 72px 0; }
+.register-page .register-eyebrow { margin: 0 0 14px; font-size: 11px; font-weight: 600; letter-spacing: .06em; color: #71856a; }
+.register-page .register-story .register-eyebrow { color: #b0c5ae; }
+.register-page .register-story-copy h2 { margin: 0 0 24px; font-size: clamp(34px, 3.4vw, 52px); font-weight: 500; line-height: 1.55; letter-spacing: -.06em; }
+.register-page .register-story-copy > p:last-child { color: #b6c8b8; font-size: 14px; line-height: 1.9; }
+.register-page .register-story-foot { padding-top: 20px; border-top: 1px solid #ffffff24; color: #adbfaf; font-size: 11px; }
+.register-page .register-form-side { display: flex; flex: 1; justify-content: center; align-items: center; min-width: 0; padding: 52px 48px; }
+.register-page .register-form-wrap { width: 100%; max-width: 390px; }
+.register-page .register-form-wrap h1 { margin-bottom: 10px; font-size: 30px; }
+.register-page .register-intro { margin-bottom: 30px; color: #768071; font-size: 13px; }
+.register-page .register-form { display: flex; flex-direction: column; gap: 22px; }
+.register-page .register-field { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.register-page .register-field > label { color: #4e654e; font-size: 13px; font-weight: 550; }
+.register-page .register-field input { min-width: 0; height: 48px; border-color: #dce4d5; background: #fdfefb; }
+.register-page .register-field input[aria-invalid="true"] { border-color: #b35f49; }
+.register-page .register-password-field { display: flex; position: relative; min-width: 0; }
+.register-page .register-password-field input { padding-right: 60px; }
+.register-page .register-password-toggle { position: absolute; top: 0; right: 9px; height: 100%; padding: 0 7px; border: 0; background: transparent; color: #5c7158; font-size: 11px; }
+.register-page .register-help { color: #778170; font-size: 11px; line-height: 1.6; }
+.register-page .register-field-error { color: #a34d38; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.register-page .register-form-error { padding: 12px 14px; border: 1px solid #e9c6b9; border-radius: 6px; background: #fff5f0; color: #8f4530; font-size: 13px; overflow-wrap: anywhere; }
+.register-page .register-submit { width: 100%; min-height: 49px; margin-top: 3px; }
+.register-page .register-login-link { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 25px; color: #768071; font-size: 12px; }
+.register-page .register-login-link a { color: #375b4c; font-weight: 650; text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 900px) {
+  .register-page .register-story { flex-basis: 38%; padding: 36px 28px 28px; }
+  .register-page .register-story-copy h2 { font-size: 34px; }
+  .register-page .register-form-side { padding: 44px 32px; }
+}
+@media (max-width: 680px) {
+  .register-page .register-shell { flex-direction: column; }
+  .register-page .register-story { flex-basis: auto; padding: 25px 26px; }
+  .register-page .register-brand { font-size: 25px; }
+  .register-page .register-story-copy { padding: 24px 0 0; }
+  .register-page .register-story-copy h2 { margin-bottom: 10px; font-size: 27px; line-height: 1.45; }
+  .register-page .register-story-copy h2 br { display: none; }
+  .register-page .register-story-copy > p:last-child { font-size: 12px; }
+  .register-page .register-story-copy > p:last-child br { display: none; }
+  .register-page .register-story-foot { display: none; }
+  .register-page .register-form-side { padding: 32px 24px 42px; }
+  .register-page .register-form-wrap h1 { font-size: 26px; }
+  .register-page .register-intro { margin-bottom: 24px; }
+}

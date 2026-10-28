@@ -6,6 +6,7 @@ from sqlalchemy import String, cast, func, literal, select, union_all
 from sqlalchemy.exc import SQLAlchemyError
 
 from .db import get_engine, reports
+from .permissions import readable_condition
 
 PAGE_SIZE = 20
 
@@ -21,10 +22,11 @@ def history_query(reference, owner_id):
     def summary(table, kind, timestamp):
         return select(literal(kind).label('kind'), cast(table.c.id, String).label('id'),
                       table.c.name, table.c.reference, table.c.exam_date,
-                      timestamp.label('saved_at')).where(func.trim(table.c.reference, ' ') == reference)
+                      timestamp.label('saved_at')).where(func.trim(table.c.reference, ' ') == reference,
+                      readable_condition(table, 'tci' if kind == 'TCI' else 'khtp', owner_id))
 
     combined = union_all(summary(reports, 'TCI', reports.c.updated_at),
-                         summary(jobs, 'K-HTP', jobs.c.last_used).where(jobs.c.owner_id == owner_id)).subquery()
+                         summary(jobs, 'K-HTP', jobs.c.last_used)).subquery()
     return select(combined).order_by(combined.c.exam_date.desc().nulls_last(),
                                     combined.c.saved_at.desc(), combined.c.kind, combined.c.id)
 
@@ -43,11 +45,11 @@ def load_history(kind, endpoint, list_state):
             source_id = int(source)
             if not 0 < source_id <= 2147483647:
                 raise ValueError
-            source_query = select(reports.c.reference).where(reports.c.id == source_id)
+            source_query = select(reports.c.reference).where(reports.c.id == source_id, readable_condition(reports, 'tci'))
         else:
             from khtp_web import jobs
             source_id = str(UUID(source))
-            source_query = select(jobs.c.reference).where(jobs.c.id == source_id, jobs.c.owner_id == g.user['id'])
+            source_query = select(jobs.c.reference).where(jobs.c.id == source_id, readable_condition(jobs, 'khtp'))
         page = min(1000000, max(1, request.args.get('history_page', 1, type=int) or 1))
         with get_engine().connect() as connection:
             row = connection.execute(source_query).first()

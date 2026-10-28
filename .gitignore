@@ -1,4 +1,4 @@
-# GitHub: runtime files and essential manuals only.
+# GitHub: runtime files and explicit current maintenance documents only.
 /*
 !/.gitignore
 !/.env.example
@@ -16,12 +16,22 @@
 !/data/
 !/docs/
 
-# Essential manuals and font provenance only.
+# Explicit current manuals, rules and contracts. Local research/history stays excluded.
 /docs/*
 !/docs/index.md
+!/docs/manual-index.md
+!/docs/manual/
+!/docs/ssot/
+!/docs/changes/
 *.md
+!/AGENTS.md
+!/SSOT.md
 !/README.md
 !/docs/index.md
+!/docs/manual-index.md
+!/docs/manual/*.md
+!/docs/ssot/*.md
+!/docs/changes/*.md
 !/static/fonts/README.md
 
 # Explicit runtime seed data only.

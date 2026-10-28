@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% set errors = errors|default({}) %}
+{% block title %}회원가입{% endblock %}
+{% block body_class %}register-page{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{{ url_for('static', filename='register.css') }}">{% endblock %}
+{% block content %}
+<main class="register-shell">
+  <section class="register-story" aria-labelledby="register-story-title">
+    <a class="register-brand" href="{{ url_for('auth.login') }}" aria-label="해석 로그인">해석<span>.</span></a>
+    <div class="register-story-copy">
+      <p class="register-eyebrow">나를 이해하는 작업 공간</p>
+      <h2 id="register-story-title">이해의 시작을,<br>함께하세요.</h2>
+      <p>기질과 성격을 살펴보고,<br>그림에 담긴 표현을 기록하는 곳.</p>
+    </div>
+    <p class="register-story-foot">TCI · K-HTP 워크스페이스</p>
+  </section>
+  <section class="register-form-side" aria-labelledby="register-title">
+    <div class="register-form-wrap">
+      <p class="register-eyebrow">시작하기</p>
+      <h1 id="register-title">회원가입</h1>
+      <p class="register-intro">사용할 아이디와 비밀번호를 입력해 주세요.</p>
+      <form method="post" action="{{ url_for('auth.register') }}" class="register-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        {% if errors.get('form') %}<p id="register-form-error" class="register-form-error" role="alert" tabindex="-1">{{ errors['form'] }}</p>{% endif %}
+        <div class="register-field">
+          <label for="username">아이디</label>
+          <input id="username" name="username" value="{{ username|default('') }}" autocomplete="username" autocapitalize="none" spellcheck="false" required maxlength="80" placeholder="사용할 아이디를 입력하세요" aria-describedby="username-help{% if errors.get('username') %} username-error{% endif %}"{% if errors.get('username') %} aria-invalid="true"{% endif %} autofocus>
+          <p id="username-help" class="register-help">공백 없이 1~80자로 입력하세요.</p>
+          {% if errors.get('username') %}<p id="username-error" class="register-field-error" role="alert">{{ errors['username'] }}</p>{% endif %}
+        </div>
+        <div class="register-field">
+          <label for="password">비밀번호</label>
+          <div class="register-password-field">
+            <input id="password" name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="128" placeholder="비밀번호를 입력하세요" aria-describedby="password-help{% if errors.get('password') %} password-error{% endif %}"{% if errors.get('password') %} aria-invalid="true"{% endif %}>
+            <button class="register-password-toggle" type="button" data-password-toggle aria-controls="password" aria-pressed="false">표시</button>
+          </div>
+          <p id="password-help" class="register-help">8~128자로 입력하세요.</p>
+          {% if errors.get('password') %}<p id="password-error" class="register-field-error" role="alert">{{ errors['password'] }}</p>{% endif %}
+        </div>
+        <div class="register-field">
+          <label for="password_confirm">비밀번호 확인</label>
+          <div class="register-password-field">
+            <input id="password_confirm" name="password_confirm" type="password" autocomplete="new-password" required minlength="8" maxlength="128" placeholder="비밀번호를 한 번 더 입력하세요" aria-describedby="password-confirm-help{% if errors.get('password_confirm') %} password-confirm-error{% endif %}"{% if errors.get('password_confirm') %} aria-invalid="true"{% endif %}>
+            <button class="register-password-toggle" type="button" data-password-toggle aria-controls="password_confirm" aria-pressed="false">표시</button>
+          </div>
+          <p id="password-confirm-help" class="register-help">입력한 비밀번호를 다시 확인합니다.</p>
+          {% if errors.get('password_confirm') %}<p id="password-confirm-error" class="register-field-error" role="alert">{{ errors['password_confirm'] }}</p>{% endif %}
+        </div>
+        {% if invite_required|default(false) %}
+        <div class="register-field">
+          <label for="invite_code">초대 코드</label>
+          <input id="invite_code" name="invite_code" type="password" autocomplete="off" required placeholder="전달받은 초대 코드를 입력하세요" aria-describedby="invite-code-help{% if errors.get('invite_code') %} invite-code-error{% endif %}"{% if errors.get('invite_code') %} aria-invalid="true"{% endif %}>
+          <p id="invite-code-help" class="register-help">베타 테스트 초대 시 전달받은 코드입니다.</p>
+          {% if errors.get('invite_code') %}<p id="invite-code-error" class="register-field-error" role="alert">{{ errors['invite_code'] }}</p>{% endif %}
+        </div>
+        {% endif %}
+        <button class="button primary register-submit" type="submit"{% if not registration_enabled|default(true) %} disabled{% endif %}>가입하기</button>
+      </form>
+      <p class="register-login-link">이미 계정이 있으신가요? <a href="{{ url_for('auth.login') }}">로그인</a></p>
+    </div>
+  </section>
+</main>
+{% endblock %}

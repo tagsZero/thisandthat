@@ -18,9 +18,10 @@ from sqlalchemy import Column, Date, DateTime, ForeignKey, Index, Integer, Large
 from sqlalchemy.exc import SQLAlchemyError
 
 from tci_web.auth import login_required
-from tci_web.db import get_engine, json_type, metadata, utc_now
+from tci_web.db import get_engine, json_type, metadata, users, utc_now
 from tci_web.exam_history import load_history, reference_key
 from tci_web.pdf_export import render_pdf
+from tci_web.permissions import get_exam, readable_condition
 from .domain import (MAX_BYTES, STATE_LABELS, apply_edits, blank_observations,
     merge_analysis, normalize_image, recalculate, validate_pack)
 
@@ -150,7 +151,9 @@ def index():
     query=request.args.get('q','').strip()
     page=max(1,request.args.get('page',1,type=int) or 1)
     page=min(page,1000000)
-    statement=select(jobs.c.id,jobs.c.name,jobs.c.reference,jobs.c.exam_date,jobs.c.last_used).where(jobs.c.owner_id==g.user['id'])
+    statement=select(jobs.c.id,jobs.c.name,jobs.c.reference,jobs.c.exam_date,jobs.c.last_used,
+        jobs.c.owner_id,users.c.username.label('owner_username')).join(users,jobs.c.owner_id==users.c.id).where(
+            readable_condition(jobs,'khtp'))
     if query:
         statement=statement.where(or_(jobs.c.name.icontains(query,autoescape=True),
             jobs.c.reference.icontains(query,autoescape=True),cast(jobs.c.exam_date,String).contains(query,autoescape=True)))
@@ -160,7 +163,8 @@ def index():
     except SQLAlchemyError:
         return render_template('khtp/records.html',active='khtp',records=[],query=query,page=1,has_next=False,
             storage_error='검사 목록을 불러오지 못했습니다. 저장소 준비 상태를 확인한 뒤 다시 시도하세요.'),503
-    records=[dict(row,has_history_reference=bool(reference_key(row['reference']))) for row in rows[:20]]
+    records=[dict(row,is_owner=row['owner_id']==g.user['id'],
+        has_history_reference=bool(reference_key(row['reference']))) for row in rows[:20]]
     history=load_history('K-HTP','khtp.index',dict(q=query,page=page))
     return render_template('khtp/records.html',active='khtp',records=records,query=query,page=page,has_next=len(rows)>20,history=history)
 
@@ -198,7 +202,7 @@ def current():
 @api
 def data(id):
     with get_engine().connect() as connection:
-        return dict(job=public(find(connection,str(id))))
+        return dict(job=public(get_exam(connection,'khtp',str(id))))
 
 
 @bp.post('/upload')
@@ -229,8 +233,8 @@ def upload():
 @bp.get('/<uuid:id>/image')
 @api
 def image(id):
-    with get_engine().begin() as connection:
-        row = find(connection,str(id))
+    with get_engine().connect() as connection:
+        row = get_exam(connection,'khtp',str(id))
     response = make_response(row['image'])
     response.headers.update({'Content-Type':'image/png','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'})
     return response

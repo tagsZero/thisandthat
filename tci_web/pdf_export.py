@@ -15,6 +15,7 @@ from .db import get_engine, reports, utc_now
 from .final_report import read_model
 from .scores import SCALES, SUBSCALES, parse_scores, parse_settings
 from .views import find_report
+from .permissions import owner_condition
 
 bp = Blueprint('pdf_export', __name__)
 INVALID = (ValueError, KeyError, TypeError, InvalidOperation)
@@ -156,7 +157,7 @@ def save_editor(report_id):
     """편집 폼 전용: 최신 행에서 입력을 검증하고 커밋한 사본만 전달한다."""
     try:
         with get_engine().begin() as connection:
-            fresh = connection.execute(select(reports).where(reports.c.id == report_id).with_for_update()).mappings().first()
+            fresh = connection.execute(select(reports).where(reports.c.id == report_id, owner_condition(reports)).with_for_update()).mappings().first()
             if fresh is None:
                 abort(404)
             original = deepcopy(dict(fresh))
@@ -170,7 +171,7 @@ def save_editor(report_id):
             validate_report(report)
             comp.material_status(connection, value, {**original, 'settings': settings}, validate_new=True)
             report['updated_at'] = utc_now()
-            connection.execute(reports.update().where(reports.c.id == report_id).values(
+            connection.execute(reports.update().where(reports.c.id == report_id, owner_condition(reports)).values(
                 settings=settings, composition=value, updated_at=report['updated_at']))
     except INVALID as error:
         return editor_failure(str(error), 'not_saved', 422)
@@ -191,7 +192,7 @@ def editor_failure(message, state, code):
 def save_output(report_id):
     try:
         with get_engine().begin() as connection:
-            fresh = connection.execute(select(reports).where(reports.c.id == report_id).with_for_update()).mappings().first()
+            fresh = connection.execute(select(reports).where(reports.c.id == report_id, owner_condition(reports)).with_for_update()).mappings().first()
             if fresh is None:
                 abort(404)
             report = deepcopy(dict(fresh))
@@ -200,7 +201,7 @@ def save_output(report_id):
             report['composition'] = value
             validate_report(report)
             report['updated_at'] = utc_now()
-            connection.execute(reports.update().where(reports.c.id == report_id).values(
+            connection.execute(reports.update().where(reports.c.id == report_id, owner_condition(reports)).values(
                 composition=value, updated_at=report['updated_at']))
     except INVALID as error:
         return failure(str(error), code=422, recovery=request.form)
