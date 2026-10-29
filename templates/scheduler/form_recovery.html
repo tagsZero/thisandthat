@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}일정 저장 다시 시도{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{{ url_for('static', filename='scheduler.css') }}">{% endblock %}
+{% block content %}
+<main class="page schedule-page schedule-editor">
+  <header class="schedule-heading"><div><div class="eyebrow">스케줄러</div><h1>제출한 일정 내용을 유지했습니다</h1></div></header>
+  <div class="schedule-error" role="alert"><p>기존 일정을 불러오지 못해 저장하지 않았습니다. 아래는 방금 제출한 내용입니다. 잠시 후 다시 시도해 주세요.</p></div>
+  <form class="panel schedule-form" method="post" action="{{ action }}">
+    <input type="hidden" name="_csrf" value="{{ account_csrf }}">
+    {% for key in ('revision', 'person_id', 'exam_link', 'report_id', 'job_id') %}{% if key in submitted %}<input type="hidden" name="{{ key }}" value="{{ submitted[key] }}">{% endif %}{% endfor %}
+    {% for key, label in (('title', '일정 이름'), ('day', '날짜'), ('time', '시작 시간'), ('duration_minutes', '소요 시간 (분)')) %}
+    {% if key in submitted %}<label>{{ label }}<input name="{{ key }}" value="{{ submitted[key] }}"></label>{% endif %}
+    {% endfor %}
+    {% if 'status' in submitted %}<label>상태<select name="status">{% if submitted.status not in ('scheduled', 'completed', 'cancelled') %}<option value="{{ submitted.status }}" selected>상태를 다시 선택해 주세요</option>{% endif %}{% for value, label in (('scheduled', '예정'), ('completed', '완료'), ('cancelled', '취소')) %}<option value="{{ value }}" {% if submitted.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>{% endif %}
+    {% if 'note' in submitted %}<label>일정 내용<textarea name="note" rows="6">{{ submitted.note }}</textarea></label>{% endif %}
+    <p class="muted">제출한 대상자·검사 선택은 유지됩니다. 다시 저장할 때 현재 소유권과 최신 일정 여부를 확인합니다.</p>
+    <div class="schedule-actions"><button class="button primary" type="submit">저장 다시 시도</button><a class="text-link" href="{{ url_for('scheduler.edit', event_id=event_id) }}" target="_blank" rel="noopener">최신 일정 별도 창에서 확인</a></div>
+  </form>
+</main>
+{% endblock %}

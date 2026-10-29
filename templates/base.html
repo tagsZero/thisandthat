@@ -8,19 +8,23 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
   <script src="{{ url_for('static', filename='app.js') }}" defer></script>
   <script src="{{ url_for('static', filename='navigation.js') }}" defer></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='people.css') }}">
+  <script src="{{ url_for('static', filename='people.js') }}" defer></script>
   {% block extra_head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
   {% if g.user %}
   <header class="site-header">
     <div class="header-inner">
-      <a class="brand" href="{{ url_for('web.portal') }}" aria-label="통합 대시보드">
+      <a class="brand" href="{{ url_for('web.portal') }}" aria-label="대시보드">
         <span class="brand-mark">{{ icon('layers') }}</span><span>해석<span class="brand-dot">.</span></span>
       </a>
       <nav class="main-nav" aria-label="주 메뉴">
-        <a href="{{ url_for('web.portal') }}" {% if active == 'portal' %}aria-current="page"{% endif %}>통합 대시보드</a>
-        <a href="{{ url_for('web.dashboard') }}" {% if active == 'tci' %}aria-current="page"{% endif %}>TCI</a>
-        <a href="{{ url_for('khtp.index') }}" {% if active == 'khtp' %}aria-current="page"{% endif %}>K-HTP</a>
+        <a href="{{ url_for('web.portal') }}" {% if active == 'portal' %}aria-current="page"{% endif %}>대시보드</a>
+        {% if feature_enabled('tci') %}<a href="{{ url_for('web.dashboard') }}" {% if active == 'tci' %}aria-current="page"{% endif %}>TCI</a>{% endif %}
+        {% if feature_enabled('khtp') %}<a href="{{ url_for('khtp.index') }}" {% if active == 'khtp' %}aria-current="page"{% endif %}>K-HTP</a>{% endif %}
+        {% if feature_enabled('schedule') %}<a href="{{ url_for('scheduler.index') }}" {% if active == 'schedule' %}aria-current="page"{% endif %}>스케줄러</a>{% endif %}
+        {% if g.user.is_admin %}<a href="{{ url_for('admin.index') }}" {% if active == 'admin' %}aria-current="page"{% endif %}>관리</a>{% endif %}
       </nav>
       <div class="account"><span class="avatar">{{ g.user.username[:1]|upper }}</span><span class="account-name">{{ g.user.username }}</span>
         <form action="{{ url_for('auth.logout') }}" method="post"><button class="logout-button" type="submit">로그아웃 {{ icon('logout') }}</button></form>
@@ -32,6 +36,6 @@
   {% if messages %}<div class="flash-container" role="status">{% for category, message in messages %}<div class="flash {{ category }}">{{ icon('check') }} {{ message }}</div>{% endfor %}</div>{% endif %}
   {% endwith %}
   {% block content %}{% endblock %}
-  {% if g.user %}<footer class="site-footer"><span>해석. <span class="footer-divider">/</span> TCI 워크스페이스</span><span>검사 결과에서, 나를 이해하는 이야기로.</span></footer>{% endif %}
+  {% if g.user %}<footer class="site-footer"><span>해석. <span class="footer-divider">/</span> 검사와 일정</span><span>검사 결과에서, 나를 이해하는 이야기로.</span></footer>{% endif %}
 </body>
 </html>

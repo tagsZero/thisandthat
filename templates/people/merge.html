@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}대상자 병합{% endblock %}
+{% block extra_head %}{% include 'people/_style.html' %}{% endblock %}
+{% block content %}
+<main class="page people-page">
+  <a class="breadcrumb" href="{{ url_for('people.detail', person_id=source.id) }}">대상자 이력으로</a>
+  <div class="people-heading"><div><h1>중복 대상자 병합</h1><p class="muted">같은 사람으로 확인한 두 코드의 검사·일정 연결을 모읍니다.</p></div></div>
+  <div class="people-stack">
+    {% if error %}<p class="flash error" role="alert">{{ error }}</p>{% endif %}
+    {% if not target %}
+    <section class="panel people-box">
+      <h2>다른 코드로 합칠 대상자</h2>
+      <p>code:{{ '%04d'|format(source.code) }} · {{ source.name or '이름 미입력' }} · {{ source.reference or '관리번호 미입력' }} · {{ source.registered_on }}</p>
+    </section>
+    <section class="panel people-box">
+      <h2>남길 대상자 선택</h2>
+      <form class="people-search" method="get">
+        <input type="search" name="q" value="{{ query }}" maxlength="100" placeholder="이름, 관리번호 또는 코드 검색" aria-label="남길 대상자 검색">
+        <button class="button secondary" type="submit">검색</button>
+      </form>
+      {% if choices %}<ul class="people-list">{% for candidate in choices %}
+        <li><a href="{{ url_for('people.merge', person_id=source.id, target_id=candidate.id) }}">
+          <span class="people-record-title">code:{{ '%04d'|format(candidate.code) }} · {{ candidate.name or '이름 미입력' }}<small>{{ candidate.reference or '관리번호 미입력' }} · {{ candidate.registered_on }}</small></span><span class="people-kind">선택</span>
+        </a></li>
+      {% endfor %}</ul>{% else %}<p class="muted">다른 대상자가 없습니다. 이름이나 관리번호를 바꿔 검색해 주세요.</p>{% endif %}
+    </section>
+    {% else %}
+    <section class="panel people-box">
+      <h2>병합 내용 확인</h2>
+      <div class="people-merge-pair">
+        <div><h3>연결을 옮길 대상자</h3><p>code:{{ '%04d'|format(source.code) }} · {{ source.name or '이름 미입력' }}</p><p class="muted">{{ source.reference or '관리번호 미입력' }} · {{ source.registered_on }}</p></div>
+        <div><h3>남길 대상자</h3><p>code:{{ '%04d'|format(target.code) }} · {{ target.name or '이름 미입력' }}</p><p class="muted">{{ target.reference or '관리번호 미입력' }} · {{ target.registered_on }}</p></div>
+      </div>
+      <p>TCI {{ counts.tci }}건 · K-HTP {{ counts.khtp }}건 · 일정 {{ counts.schedule }}건의 연결을 남길 대상자로 옮깁니다.</p>
+      <p class="muted" style="margin-top: 10px">검사의 이름·관리번호·날짜·점수·본문과 공유·댓글은 유지됩니다. 병합한 코드는 안내용으로 남습니다. 병합을 취소하는 기능은 없으므로 같은 사람인지 확인해 주세요.</p>
+      <form method="post">
+        <input type="hidden" name="_csrf" value="{{ account_csrf }}">
+        <input type="hidden" name="target_id" value="{{ target.id }}">
+        <input type="hidden" name="merge_token" value="{{ merge_token }}">
+        <label class="people-merge-confirm"><input type="checkbox" name="confirm" value="merge" required><span>두 코드가 같은 사람임을 확인했습니다.</span></label>
+        <div class="people-actions"><button class="button primary" type="submit">code:{{ '%04d'|format(target.code) }}로 병합</button><a class="button secondary" href="{{ url_for('people.merge', person_id=source.id) }}">다시 선택</a></div>
+      </form>
+    </section>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

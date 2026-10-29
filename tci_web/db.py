@@ -4,7 +4,7 @@ import click
 from flask import current_app
 from sqlalchemy import (
     JSON, Boolean, Column, Date, DateTime, ForeignKey, Integer, MetaData,
-    String, Table, Text, Time, Index, select, inspect, text,
+    String, Table, Text, Time, Index, UniqueConstraint, CheckConstraint, select, inspect, text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from werkzeug.security import generate_password_hash
@@ -22,11 +22,37 @@ users = Table(
     Column("id", Integer, primary_key=True),
     Column("username", String(80), unique=True, nullable=False),
     Column("password_hash", Text, nullable=False),
+    Column("is_admin", Boolean, nullable=False, default=False, server_default=text("false")),
+    Column("is_active", Boolean, nullable=False, default=True, server_default=text("true")),
+    Column("session_version", Integer, nullable=False, default=0, server_default=text("0")),
+    Column("next_person_code", Integer, nullable=False, default=0, server_default=text("0")),
 )
+feature_settings = Table(
+    "feature_settings", metadata,
+    Column("key", String(30), primary_key=True),
+    Column("enabled", Boolean, nullable=False, default=True, server_default=text("true")),
+)
+people = Table(
+    "people", metadata,
+    Column("id", Integer, primary_key=True),
+    Column("owner_id", ForeignKey("users.id"), nullable=False),
+    Column("code", Integer, nullable=False),
+    Column("name", String(100), nullable=False, default=""),
+    Column("reference", String(100), nullable=False, default=""),
+    Column("registered_on", Date, nullable=False),
+    Column("merged_into_id", ForeignKey("people.id"), nullable=True),
+    Column("created_at", DateTime(timezone=True), nullable=False, default=utc_now),
+    Column("updated_at", DateTime(timezone=True), nullable=False, default=utc_now),
+    UniqueConstraint("owner_id", "code", name="uq_people_owner_code"),
+    CheckConstraint("code > 0", name="ck_people_positive_code"),
+    CheckConstraint("merged_into_id IS NULL OR merged_into_id != id", name="ck_people_not_self_merged"),
+)
+Index("ix_people_owner_name", people.c.owner_id, people.c.name, people.c.id)
 reports = Table(
     "reports", metadata,
     Column("id", Integer, primary_key=True),
     Column("owner_id", ForeignKey("users.id"), nullable=True),
+    Column("person_id", ForeignKey("people.id"), nullable=True),
     Column("name", String(100), nullable=False, default=""),
     Column("reference", String(100), nullable=False, default=""),
     Column("exam_date", Date),
@@ -46,9 +72,17 @@ appointments = Table(
     Column("title", String(120), nullable=False),
     Column("note", Text, nullable=False, default=""),
     Column("report_id", ForeignKey("reports.id"), nullable=True),
+    Column("person_id", ForeignKey("people.id"), nullable=True),
+    Column("job_id", String(36), ForeignKey("khtp_jobs.id"), nullable=True),
+    Column("duration_minutes", Integer, nullable=True),
+    Column("status", String(20), nullable=False, default="scheduled", server_default="scheduled"),
+    Column("revision", Integer, nullable=False, default=1, server_default=text("1")),
+    Column("updated_at", DateTime(timezone=True), nullable=True, default=utc_now),
 )
 Index("ix_reports_owner_updated_id", reports.c.owner_id, reports.c.updated_at.desc(), reports.c.id.desc())
 Index("ix_appointments_owner_day_time", appointments.c.owner_id, appointments.c.day, appointments.c.time)
+Index("ix_reports_owner_person", reports.c.owner_id, reports.c.person_id)
+Index("ix_appointments_owner_person", appointments.c.owner_id, appointments.c.person_id)
 
 sources = Table(
     "interpretation_sources", metadata,
@@ -111,12 +145,82 @@ def upgrade_privacy(connection):
                 changed.append(table.name + ".owner_id")
     metadata.create_all(connection)
     for table in (reports, appointments):
+        columns = {column["name"] for column in inspect(connection).get_columns(table.name)}
         for index in table.indexes:
-            index.create(connection, checkfirst=True)
+            if all(column.name in columns for column in index.columns):
+                index.create(connection, checkfirst=True)
+    return changed
+
+
+def upgrade_haeseok(connection):
+    """Add identity/scheduling columns explicitly; never infer legacy identities."""
+    from khtp_web import jobs  # register all FK targets before creating tables
+    from . import account_schema, scheduler_schema
+
+    existing = set(inspect(connection).get_table_names())
+    if connection.dialect.name == "postgresql":
+        names = [name for name in ("users", "reports", "khtp_jobs", "appointments") if name in existing]
+        if names:
+            connection.execute(text("LOCK TABLE " + ", ".join(names) + " IN ACCESS EXCLUSIVE MODE"))
+    changed = []
+
+    def add_columns(table_name, definitions):
+        if table_name not in existing:
+            return
+        columns = {column["name"] for column in inspect(connection).get_columns(table_name)}
+        for name, definition in definitions:
+            if name not in columns:
+                # Both names and SQL definitions are fixed constants below.
+                connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {name} {definition}"))
+                changed.append(f"{table_name}.{name}")
+
+    add_columns("users", (
+        ("is_admin", "BOOLEAN NOT NULL DEFAULT false"),
+        ("is_active", "BOOLEAN NOT NULL DEFAULT true"),
+        ("session_version", "INTEGER NOT NULL DEFAULT 0"),
+        ("next_person_code", "INTEGER NOT NULL DEFAULT 0"),
+    ))
+    users.create(connection, checkfirst=True)
+    people.create(connection, checkfirst=True)
+    feature_settings.create(connection, checkfirst=True)
+    add_columns("reports", (
+        ("owner_id", "INTEGER REFERENCES users(id)"),
+        ("person_id", "INTEGER REFERENCES people(id)"),
+    ))
+    add_columns("khtp_jobs", (("person_id", "INTEGER REFERENCES people(id)"),))
+    jobs.create(connection, checkfirst=True)
+    stamp_type = "TIMESTAMP WITH TIME ZONE" if connection.dialect.name == "postgresql" else "DATETIME"
+    add_columns("appointments", (
+        ("owner_id", "INTEGER REFERENCES users(id)"),
+        ("person_id", "INTEGER REFERENCES people(id)"),
+        ("job_id", "VARCHAR(36) REFERENCES khtp_jobs(id)"),
+        ("duration_minutes", "INTEGER"),
+        ("status", "VARCHAR(20) NOT NULL DEFAULT 'scheduled'"),
+        ("revision", "INTEGER NOT NULL DEFAULT 1"),
+        ("updated_at", stamp_type),
+    ))
+    metadata.create_all(connection)
+    for table in (people, reports, appointments, jobs):
+        columns = {column["name"] for column in inspect(connection).get_columns(table.name)}
+        for index in table.indexes:
+            if all(column.name in columns for column in index.columns):
+                index.create(connection, checkfirst=True)
+    keys = set(connection.scalars(select(feature_settings.c.key)))
+    for key in ("tci", "khtp", "schedule"):
+        if key not in keys:
+            connection.execute(feature_settings.insert().values(key=key, enabled=True))
     return changed
 
 
 def init_app(app):
+    @app.cli.command("upgrade-haeseok")
+    def upgrade_haeseok_command():
+        """대상자·일정·관리 구조만 준비한다. 기존 자료는 자동 병합하지 않는다."""
+        with get_engine().begin() as connection:
+            changed = upgrade_haeseok(connection)
+        click.echo("해석 구조 준비 완료 · 기존 내용/소유권 보존 · 대상자 자동 연결 없음 · 기존 일정 소요 시간 미설정" +
+                   (" · " + ", ".join(changed) if changed else " · 추가 컬럼 변경 없음"))
+
     @app.cli.command("upgrade-privacy")
     def upgrade_privacy_command():
         """계정 컬럼과 공유/댓글 구조만 준비한다. 기존 소유자는 추측하지 않는다."""
@@ -147,7 +251,10 @@ def init_app(app):
                 if not all_unassigned and not identifiers:
                     continue
                 predicate = table.c.owner_id.is_(None) if all_unassigned else table.c.id.in_(identifiers)
-                statement = select(table).where(predicate).order_by(table.c.id)
+                columns = [table.c.id, table.c.owner_id]
+                if table is appointments:
+                    columns.append(table.c.report_id)
+                statement = select(*columns).where(predicate).order_by(table.c.id)
                 if apply_changes:
                     statement = statement.with_for_update()
                 rows = connection.execute(statement).mappings().all()

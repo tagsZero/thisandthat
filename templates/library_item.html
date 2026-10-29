@@ -3,7 +3,7 @@
 {% block title %}해석 자료 편집{% endblock %}
 {% block content %}
 <main class="page library-editor"><a class="breadcrumb" href="{{ url_for('library.index') }}">← 자료 관리</a><h1>해석 자료 편집</h1><p class="muted">원문과 보고서용 설명을 구분해 입력합니다.</p>
-<form method="post" class="panel library-form">
+<form method="post" class="panel library-form"><input type="hidden" name="_csrf" value="{{ account_csrf_token() }}">
 {% if errors %}<div class="flash error" role="alert">입력 내용을 확인해 주세요. 저장하지 않았습니다.<ul>{% for key, message in errors.items() %}<li><a href="#{{ key if not key.startswith('numeric_') else 'numeric-rules' }}">{{ message }}</a></li>{% endfor %}</ul></div>{% endif %}
 <label for="source_id">소스 필수</label><select id="source_id" name="source_id" {% if errors.get('source_id') %}aria-invalid="true" aria-describedby="error-source_id"{% endif %}><option value="">소스 선택</option>{% if errors.get('source_id') and form.get('source_id') %}<option selected value="{{ form.get('source_id') }}">{{ form.get('source_id') }} (확인 필요)</option>{% endif %}{% for source in source_list %}<option value="{{ source.id }}" {% if form.get('source_id')|string == source.id|string %}selected{% endif %}>{{ source.title }}{{ ' (사용 중지)' if not source.active else '' }}</option>{% endfor %}</select>{% if errors.get('source_id') %}<p class="field-error" id="error-source_id">{{ errors.source_id }}</p>{% endif %}
 {{ field('title','제목',form,errors,required=true) }}

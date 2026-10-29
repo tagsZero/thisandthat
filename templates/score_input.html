@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'person_picker.html' import person_picker %}
 {% macro error(key) -%}
 <span class="field-error" id="error-{{ key }}" data-error-for="{{ key }}">{{ errors.get(key, '') }}</span>
 {%- endmacro %}
@@ -15,11 +16,16 @@
   <a class="breadcrumb" href="{{ url_for('web.dashboard') }}">{{ icon('back', 16) }} TCI 대시보드</a>
   <div class="page-heading"><div><div class="eyebrow">TCI-RS · 검사 결과 등록</div><h1>{{ '검사 결과 수정' if report.id else '새 점수 입력' }}</h1><p class="muted">결과지에 기재된 수치를 입력하세요. 일부 점수만 입력해도 저장할 수 있습니다.</p></div></div>
   <form method="post" class="score-form" data-preview-url="{{ url_for('web.classification_preview') }}">
+    <input type="hidden" name="_csrf" value="{{ account_csrf_token() }}">
+    <input type="hidden" name="score_context" value="{{ score_context }}">
+    {% if errors.conflict %}<p class="field-error" role="alert">{{ errors.conflict }}</p>{% endif %}
     <section class="panel input-panel">
       <div class="panel-heading"><h2>대상 정보</h2><span class="quiet-label">이름 또는 관리번호 입력</span></div>
+      {{ person_picker(person=person, prefix='tci', name_selector='#name', reference_selector='#reference') }}
+      {{ error('person_id') }}
       <div class="identity-fields">
         <label for="name">이름<input id="name" name="name" value="{{ report.name }}" maxlength="100" placeholder="검사 대상자 이름" aria-describedby="error-name" {% if errors.name %}aria-invalid="true"{% endif %}>{{ error('name') }}</label>
-        <label>관리번호 <span class="optional">선택</span><input name="reference" value="{{ report.reference }}" maxlength="100" placeholder="예: TCI-001"></label>
+        <label>관리번호 <span class="optional">선택</span><input id="reference" name="reference" value="{{ report.reference }}" maxlength="100" placeholder="예: TCI-001"></label>
         <label>검사일<input name="exam_date" type="date" value="{{ report.exam_date.isoformat() if report.exam_date else '' }}">{{ error('exam_date') }}</label>
       </div>
     </section>

@@ -25,8 +25,9 @@ def history_query(reference, owner_id):
                       timestamp.label('saved_at')).where(func.trim(table.c.reference, ' ') == reference,
                       readable_condition(table, 'tci' if kind == 'TCI' else 'khtp', owner_id))
 
-    combined = union_all(summary(reports, 'TCI', reports.c.updated_at),
-                         summary(jobs, 'K-HTP', jobs.c.last_used)).subquery()
+    from .admin import feature_enabled
+    combined = union_all(summary(reports, 'TCI', reports.c.updated_at).where(feature_enabled('tci')),
+                         summary(jobs, 'K-HTP', jobs.c.last_used).where(feature_enabled('khtp'))).subquery()
     return select(combined).order_by(combined.c.exam_date.desc().nulls_last(),
                                     combined.c.saved_at.desc(), combined.c.kind, combined.c.id)
 

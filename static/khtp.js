@@ -2,6 +2,7 @@
   'use strict';
   const root = document.querySelector('.khtp-page');
   if (!root) return;
+  const draftContext = root.dataset.draftContext;
   const $ = id => document.getElementById('khtp-' + id);
   const labels = {observed:'관찰됨',absent:'없음 확인',unobserved:'아직 관찰하지 않음',uncertain:'판단불가'};
   let job = null, busy = false, sequence = 0, dirty = {}, selected = null, preview = null;
@@ -42,10 +43,11 @@
   }
   function requestBody() {
     return {revision:job.revision,edits:Object.fromEntries(Object.keys(dirty).map(id => [id,clone(job.observations[id])])),
-      ...(Object.keys(subjectDirty).length ? {subject:validateSubject()} : {})};
+      ...(Object.keys(subjectDirty).length ? {subject:validateSubject()} : {}),
+      ...('person_id' in subjectDirty ? {person_id:$('person_id').value} : {})};
   }
   async function request(url, options = {}, retry = true) {
-    const response = await fetch(url,{...options,headers:{'X-KHTP-CSRF':root.dataset.csrf,...options.headers}});
+    const response = await fetch(url,{...options,headers:{...options.headers,'X-KHTP-CSRF':root.dataset.csrf,'X-KHTP-Draft-Context':draftContext}});
     if (response.headers.get('content-type')?.includes('application/pdf')) return {response};
     let data;
     try { data = await response.json(); }
@@ -56,24 +58,31 @@
         root.dataset.csrf=refreshed.data.csrf;
         return request(url,options,false);
       }
+      return refreshed;
     }
     return {response,data};
   }
   function syncShareLink() {
-    const link=$('share');
+    const link=$('share'),schedule=$('schedule');
     root.dataset.jobId=job?.id || '';
     if(job) {
       link.href=link.dataset.urlTemplate.replace('__job_id__',encodeURIComponent(job.id));
       link.hidden=false;
+      schedule.href=`/schedule/new?kind=khtp&exam_id=${encodeURIComponent(job.id)}`;schedule.hidden=schedule.dataset.enabled!=='1';
     } else {
       link.hidden=true;
       link.removeAttribute('href');
+      schedule.hidden=true;schedule.removeAttribute('href');
     }
   }
   function adopt(fresh, captured = {}, capturedSubject = {}) {
     const currentSubject=readSubject(),pendingSubject={};
     for(const key of Object.keys(subjectDirty))if(subjectDirty[key]!==capturedSubject[key])pendingSubject[key]=subjectDirty[key];
     for(const key of subjectFields)$(key).value=key in pendingSubject ? currentSubject[key] : (fresh.subject?.[key] || '');
+    if(!('person_id' in pendingSubject)) {
+      window.HaeseokPeople?.set('khtp-person-picker',fresh.person);
+      $('person_id').value=fresh.person_id || '';
+    }
     subjectDirty=pendingSubject;
     const pending = {};
     for (const id of Object.keys(dirty)) {
@@ -233,13 +242,18 @@
           const refreshed=await request(`/khtp/${job.id}/data`);
           if(refreshed.response.ok && refreshed.data.job?.id===job.id && refreshed.data.job.revision===job.revision) adopt(refreshed.data.job,captured,capturedSubject);
         } catch { /* The downloaded snapshot is saved; keep any ongoing edits. */ }
-        status(isDirty()?'PDF 요청 당시 내용은 저장·출력했습니다. 대기 중 수정한 내용은 아직 저장하지 않았습니다.':'현재 내용으로 PDF를 받았습니다.');
+        const detached=Number(response.headers.get('X-KHTP-Detached-Schedules'));
+        const notice=Number.isSafeInteger(detached)&&detached>0 ? ` 대상자가 달라진 일정 ${detached}건의 검사 연결을 해제했습니다. 일정의 대상자와 시간은 유지됩니다.` : '';
+        status((isDirty()?'PDF 요청 당시 내용은 저장·출력했습니다. 대기 중 수정한 내용은 아직 저장하지 않았습니다.':'현재 내용으로 PDF를 받았습니다.')+notice);
       } else status(data.message+(isDirty()?' 대기 중 수정한 내용은 아직 저장하지 않았습니다.':''));
       return true;
     } catch(error){status(error.message,true);return false;}finally{lock(false);}
   }
   for(const key of subjectFields)$(key).addEventListener('input',()=>{
     subjectDirty[key]=++sequence;status('수정한 대상 정보가 있습니다. 분석하거나 저장해 주세요.');
+  });
+  $('person_id').addEventListener('input',()=>{
+    subjectDirty.person_id=++sequence;status('대상자 연결을 변경했습니다. 저장하면 반영됩니다.');
   });
   $('file').addEventListener('change',()=>{
     const file=$('file').files[0];if(preview)URL.revokeObjectURL(preview);
@@ -251,6 +265,7 @@
     let subject;try{subject=validateSubject();}catch(error){status(error.message);return;}
     const capturedSubject={...subjectDirty};const form=new FormData();form.append('image',file);
     for(const [key,value] of Object.entries(subject))form.append(key,value);
+    form.append('person_id',$('person_id').value);
     lock(true);status('그림을 확인하고 있습니다.');
     try{const {response,data}=await request('/khtp/upload',{method:'POST',body:form});if(!response.ok)throw new Error(data.message);selected=null;adopt(data.job,{},capturedSubject);root.dataset.jobId=job.id;history.replaceState(null,'',data.job.url);$('file').value='';lock(false);await action('analyze');}
     catch(error){status(error.message,true);}finally{lock(false);}
@@ -264,6 +279,7 @@
   $('new').addEventListener('click',()=>{
     if(isDirty()&&!confirm('저장하지 않은 수정이 있습니다. 다른 그림을 선택하시겠습니까?'))return;
     job=null;dirty={};subjectDirty={};selected=null;
+    window.HaeseokPeople?.set('khtp-person-picker',null);$('person_id').value='';
     syncShareLink();
     root.dataset.jobId='';history.replaceState(null,'','/khtp/new');
     for(const key of subjectFields)$(key).value=key==='exam_date'?new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()):'';
