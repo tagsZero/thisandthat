@@ -1,6 +1,12 @@
 # K-HTP 기능·유지보수 SSOT
 
-상태: active · 계약 관리: K-HTP 익스큐트(Astra) / 오케스트라 · 갱신·정적 소스 대조: 2026-10-28
+2026-10-29 추가 보완 R6~R8: 작성 계정의 서명 컨텍스트·동일 계정 재인증·다른 계정 저장 차단, 검사 댓글 실패 복구, 검색 Enter 처리는 [추가 보완 계약](08-people-scheduler.md#account-draft-recovery)을 따른다. 기존 API/옛 화면 호환 제한과 실제 검증/운영 상태는 [PLAT-20261029-03](../changes/khtp.md#plat-20261029-03)에 기록한다.
+
+2026-10-29 최신 변경: 그림 업로드/저장에 대상자 선택·자동 코드 발급을 연결한다. 기존 revision과 저장/분석/PDF 계약을 유지한다. 공유 수신자에게 원 소유자의 person_id·전체 이력을 노출하지 않는다. 저장한 기록에서 일정 잡기를 제공한다. 상세 계약은 [대상자·스케줄러 SSOT](08-people-scheduler.md)를 따른다. 아래 이와 다른 과거 일정 배치·비공개 전용 설명은 대체한다. 검증 진행은 [변경 대장](../changes/platform.md#plat-20261029-01)에 기록한다.
+
+2026-10-29 후속 보완: 검사 대상자 변경의 일정 연결 정리, 저장 응답 사본과 실패 복구는 [보완 계약](08-people-scheduler.md#recovery-fixes)을 따른다. 구현 위치와 전체 311건/독립 29건 검증·운영 상태는 [최신 패치 기록](../changes/khtp.md#plat-20261029-02)에 연결한다.
+
+상태: active · 계약 관리: K-HTP 익스큐트(Astra) / 오케스트라 · 갱신·소스 대조: 2026-10-29
 
 [작업 인덱스](../manual-index.md) · [통합 SSOT](../../SSOT.md) · [공통 UI](../manual/ui-rules.md) · [K-HTP 변경 대장](../changes/khtp.md)
 

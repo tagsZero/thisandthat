@@ -24,6 +24,21 @@ def private_response(response):
 @bp.errorhandler(SQLAlchemyError)
 def storage_error(error):
     current_app.logger.warning("Examination collaboration storage operation failed: %s", type(error).__name__)
+    if request.method == "POST" and request.endpoint in {
+            "collaboration.comment", "collaboration.edit_comment"}:
+        # Recover only what was submitted. This must not need another database
+        # read or imply that the examination/thread was successfully authorized.
+        # Retrying the original endpoint rechecks access, authorship and CSRF.
+        arguments = request.view_args or {}
+        kind = arguments["kind"]
+        return render_template("exam_comment_recovery.html",
+            active=kind if kind in ("tci", "khtp") else "",
+            kind=kind, exam_id=arguments["exam_id"],
+            editing=request.endpoint == "collaboration.edit_comment",
+            action=request.full_path.removesuffix("?"), account_csrf=csrf_token(),
+            body=request.form.get("body", ""),
+            audience=request.form.get("audience", "private"),
+            recipient_id=request.form.get("recipient_id", "")), 503
     return "저장소에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.", 503
 
 

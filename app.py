@@ -57,6 +57,11 @@ def create_app(test_config=None):
     from tci_web.collaboration import init_app as init_collaboration
     init_collaboration(app)
 
+    from tci_web import admin, people, scheduler
+    app.register_blueprint(people.bp)
+    scheduler.init_app(app)
+    admin.init_app(app)
+
     @app.after_request
     def private_account_response(response):
         if request.endpoint != "static" and (getattr(g, "user", None) or session.get("user_id")):

@@ -99,10 +99,12 @@ def load_user():
     if user_id is not None:
         with get_engine().connect() as connection:
             g.user = connection.execute(
-                select(users.c.id, users.c.username).where(users.c.id == user_id)
+                select(users.c.id, users.c.username, users.c.is_admin, users.c.is_active,
+                       users.c.session_version).where(users.c.id == user_id)
             ).mappings().first()
-        if g.user is None:
+        if g.user is None or not g.user['is_active'] or session.get('session_version', 0) != g.user['session_version']:
             session.clear()
+            g.user = None
 
 
 def login_required(view):
@@ -142,11 +144,12 @@ def login():
             user = connection.execute(
                 select(users).where(users.c.username == username)
             ).mappings().first()
-        if not user or not check_password_hash(user["password_hash"], password):
+        if not user or not user['is_active'] or not check_password_hash(user["password_hash"], password):
             error = "아이디 또는 비밀번호를 확인해 주세요."
         else:
             session.clear()
             session["user_id"] = user["id"]
+            session['session_version'] = user['session_version']
             return redirect(url_for("web.portal"))
     return render_template("login.html", error=error, username=username)
 

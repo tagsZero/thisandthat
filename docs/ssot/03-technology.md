@@ -1,5 +1,7 @@
 # TCI 기술 스택 SSOT
 
+2026-10-29 최신 변경: 기존 PostgreSQL 관계형 DB와 Flask/Jinja/기본 JavaScript 스택·의존성 핀을 유지한다. people와 계정별 원자적 순번, 각 기록 person_id, 일정 duration/status/revision, appointment_shares/comments, users 역할/활성/세션 개정, feature_settings를 추가한다. upgrade-haeseok은 추가형·반복 안전한 명시 이관이며 앱 시작 시 DDL은 없다. 상세 계약은 [대상자·스케줄러 SSOT](08-people-scheduler.md)를 따른다. 아래 이와 다른 과거 일정 배치·비공개 전용 설명은 대체한다. 검증 진행은 [변경 대장](../changes/platform.md#plat-20261029-01)에 기록한다.
+
 2026-10-28 계정 분리/공유: 기존 스택/핀을 유지하고 reports/appointments owner_id, exam_shares/exam_comments와 공통 권한 함수를 추가한다. 목록/이력/직접SQL/그림/PDF/저장을 구분하며 원본은 owner, 저장본 읽기는 owner 또는 유효 공유다. 댓글/메모는 검사 본문/수정시각/개정과 분리한다. 명시 upgrade-privacy/소유자 귀속 CLI를 사용하고 시작 시 이관/기존 owner 추정은 하지 않는다. 사용자가 기존 TCI/일정을 모두 sura 소유로 확인했으며 실제 운영 이관은 사용자가 수행한다. [계정·공유 SSOT](07-account-sharing.md)가 계약 원본이다. 이후 일반 보안 강화 제외 문구는 이번 계정 분리 범위에는 적용하지 않는다.
 
 2026-10-28 최신 문서 포함 정책: `AGENTS.md`, `SSOT.md`, `docs/manual-index.md`, `docs/manual/*.md`, `docs/ssot/*.md`, `docs/changes/*.md`를 Git 포함 대상으로 추가한다. 과거 task·보고서·참고·인계·개발 계획과 원본·임시자료는 로컬 제외를 유지한다. 아래 2026-10-26 구성은 당시 결정이다. 현재 [.gitignore](../../.gitignore)와 [실행 매뉴얼](../index.md#git-scope)을 따른다. 실제 Git 추적·commit·push는 이번에 확인/실행하지 않는다.

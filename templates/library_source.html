@@ -3,7 +3,7 @@
 {% block title %}소스 편집{% endblock %}
 {% block content %}
 <main class="page library-editor"><a class="breadcrumb" href="{{ url_for('library.index') }}">← 자료 관리</a><h1>소스 편집</h1>
-<form method="post" class="panel library-form">
+<form method="post" class="panel library-form"><input type="hidden" name="_csrf" value="{{ account_csrf_token() }}">
 {% if errors %}<div class="flash error" role="alert">입력 내용을 확인해 주세요. 저장하지 않았습니다.</div>{% endif %}
 {% for name, label, multiline in [('title','소스 제목',false),('author','저자·전문가 (미확인 시 빈칸)',false),('perspective','관점 설명',true),('filename','원본 파일명',false),('alternate_filename','대체 형식 파일명',false)] %}{{ field(name,label,form,errors,multiline,required=name in ['title','filename']) }}{% endfor %}
 {{ field('edition','검사판',form,errors,options=editions,required=true) }}

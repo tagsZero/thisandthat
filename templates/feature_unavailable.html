@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block title %}기능 사용 안내{% endblock %}
+{% block content %}<main class="page"><section class="panel input-panel"><h1>{{ message }}</h1><p>기존 자료는 보존되어 있습니다.</p><a class="button secondary" href="{{ url_for('web.portal') }}">대시보드로</a></section></main>{% endblock %}

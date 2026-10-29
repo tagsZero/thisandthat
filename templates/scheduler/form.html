@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% from 'person_picker.html' import person_picker %}
+{% block title %}{{ '일정 수정' if event else '일정 작성' }}{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{{ url_for('static', filename='scheduler.css') }}">{% endblock %}
+{% block content %}
+<main class="page schedule-page schedule-editor">
+  <header class="schedule-heading"><div><div class="eyebrow">스케줄러</div><h1>{{ '일정 수정' if event else '일정 작성' }}</h1><p class="muted">날짜와 시간을 정하고 필요한 검사를 연결하세요.</p></div><a class="text-link" href="{{ url_for('scheduler.detail', event_id=event.id) if event else url_for('scheduler.index') }}">{{ '일정 보기' if event else '일정 목록' }}</a></header>
+  {% if errors %}<div class="schedule-error" role="alert"><p>입력 내용을 확인해 주세요.</p><ul>{% for key, message in errors.items() %}<li>{{ message }}</li>{% endfor %}</ul>{% if errors.get('conflict') and event %}<a href="{{ url_for('scheduler.edit', event_id=event.id) }}" target="_blank" rel="noopener">최신 일정 별도 창에서 확인</a>{% endif %}</div>{% endif %}
+  {% if event and event.connection_needs_check %}<p class="schedule-error" role="alert">일정과 검사의 대상자 연결을 확인해 주세요. 검사 연결을 해제하거나 다시 선택할 수 있습니다.</p>{% endif %}
+  <form class="panel schedule-form" method="post" action="{{ url_for('scheduler.edit', event_id=event.id) if event else url_for('scheduler.new') }}">
+    <input type="hidden" name="_csrf" value="{{ account_csrf }}"><input type="hidden" name="revision" value="{{ form.revision }}">
+    <label>일정 이름<input name="title" maxlength="120" value="{{ form.title }}" required placeholder="예: TCI 결과 상담" {% if errors.get('title') %}aria-invalid="true"{% endif %}></label>
+    <div class="schedule-fields">
+      <label>날짜<input name="day" type="date" value="{{ form.day }}" required {% if errors.get('day') %}aria-invalid="true"{% endif %}></label>
+      <label>시작 시간<input name="time" type="time" value="{{ form.time }}" required {% if errors.get('time') %}aria-invalid="true"{% endif %}></label>
+      <label>소요 시간 (분)<input name="duration_minutes" type="number" list="schedule-durations" min="5" max="1440" value="{{ form.duration_minutes }}" required placeholder="30 또는 60" {% if errors.get('duration_minutes') %}aria-invalid="true"{% endif %}><datalist id="schedule-durations"><option value="30">30분</option><option value="60">60분</option></datalist></label>
+      <label>상태<select name="status">{% for value, label in statuses.items() %}<option value="{{ value }}" {% if form.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    </div>
+    {% if event and event.duration_minutes is none %}<p class="muted">기존 일정에는 소요 시간이 저장되어 있지 않습니다. 실제 소요 시간을 입력해 주세요.</p>{% endif %}
+    <details class="schedule-connections" {% if form.person_id or form.exam_link or errors.get('person_id') or errors.get('exam_link') %}open{% endif %}><summary>대상자·검사 연결 <span class="muted">선택</span></summary>
+      {% if unavailable %}<input type="hidden" name="person_id" value="{{ form.person_id }}"><p class="muted">{{ '선택한 대상자는 유지됩니다. 다시 저장할 때 연결을 확인합니다.' if form.person_id else '대상자 연결 없음' }}</p>{% else %}{{ person_picker(person=person, prefix='schedule', reset_label='연결 안 함', create_hint=false) }}{% endif %}
+      <label>연결 검사<select name="exam_link"><option value="">검사 연결 안 함</option>{% if form.exam_link == '__keep__' %}<option value="__keep__" selected>기존 검사 연결 유지 · 현재 상세 정보 비노출</option>{% elif form.exam_link and form.exam_link not in choices|map(attribute='value')|list %}<option value="{{ form.exam_link }}" selected>선택한 검사 유지 · 저장할 때 연결 확인</option>{% endif %}{% for choice in choices %}<option value="{{ choice.value }}" {% if form.exam_link == choice.value %}selected{% endif %}>{{ 'TCI' if choice.kind == 'tci' else 'K-HTP' }} · {{ choice.name or '이름 미입력' }} · {{ choice.reference or '관리번호 미입력' }} · {{ choice.exam_date or '검사일 미입력' }}{% if choice.owner_id != g.user.id %} · 공유받음{% endif %}</option>{% endfor %}</select></label>
+      {% if unavailable %}<p class="schedule-error">연결 목록을 불러오지 못했습니다. 선택한 대상자와 검사는 유지되며 다시 저장할 때 현재 권한을 확인합니다.</p>{% endif %}
+      <p class="muted">검사 상세 화면의 ‘일정 잡기’에서도 바로 연결할 수 있습니다.</p>
+    </details>
+    <label>일정 내용 <span class="muted">선택 · 일정 공유 시 함께 표시</span><textarea name="note" rows="4" maxlength="5000">{{ form.note }}</textarea></label>
+    <p class="muted">나만 보는 메모와 공유 댓글은 일정을 저장한 뒤 남길 수 있습니다.</p>
+    <div class="schedule-actions"><button class="button primary" type="submit">일정 저장</button><a class="button secondary" href="{{ url_for('scheduler.detail', event_id=event.id) if event else url_for('scheduler.index') }}">취소</a></div>
+  </form>
+</main>
+{% endblock %}

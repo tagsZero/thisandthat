@@ -1,7 +1,9 @@
-# 디스앤댓 작업 매뉴얼 인덱스
+# 해석 작업 매뉴얼 인덱스
+
+2026-10-29 진입점 추가: [대상자 코드·검색·병합](ssot/08-people-scheduler.md#identity), [스케줄러·공유·댓글](ssot/08-people-scheduler.md#schedule), [구현 소유권](ssot/08-people-scheduler.md#ownership). 제품명은 해석, 통합 진입 화면은 대시보드다. 이번 후속 구현/격리 검증은 사용자가 승인했으며 아래 문서 최초 작성 때의 실행 제한과 구분한다.
 
 상태: active · 문서 관리: 오케스트라(범위·색인), 각 기능 익스큐트(계약·소스 대조)
-최종 갱신일·정적 구현 대조일: 2026-10-28 · 운영 도메인·배포 상태: 사용자 연결 보고, 직접 확인하지 않음
+최종 갱신일·정적 구현 대조일: 2026-10-29 · 운영 도메인·배포 상태: 사용자 연결 보고, 직접 확인하지 않음
 
 <a id="entry"></a>
 ## 1. 목적과 접근 순서
@@ -20,7 +22,7 @@
 
 | 작업 | 먼저 읽을 문서·앵커 | 소스 확인 시작점 | 추가 확인 조건 |
 |---|---|---|---|
-| 통합 대시보드·새 프로그램 진입 | [공통 기반#portal](ssot/04-platform.md#portal) | `tci_web/views.py:portal`, `templates/portal.html` | 헤더·인증·새 데이터 연결 시 공통 계약 확인 |
+| 대시보드·새 프로그램 진입 | [공통 기반#portal](ssot/04-platform.md#portal) | `tci_web/views.py:portal`, `templates/portal.html` | 헤더·인증·새 데이터 연결 시 공통 계약 확인 |
 | 공통 헤더·탐색·로그인 | [공통 기반#auth-navigation](ssot/04-platform.md#auth-navigation) | `templates/base.html`, `tci_web/auth.py`, `static/navigation.js` | 두 프로그램 이동·미저장 보호 영향 |
 | 회원가입·가입 제한 설정 | [공통 기반#registration](ssot/04-platform.md#registration) | `tci_web/auth.py:register`, `templates/register.html`, `static/register.css` | 계정 신규 저장·CSRF·중복·기존 열람 범위·초대 설정 |
 | 계정별 검사·일정·기존 자료 귀속 | [계정·공유 SSOT](ssot/07-account-sharing.md) | `tci_web/permissions.py`, `db.py`, `views.py`, `khtp_web/__init__.py` | 미귀속 격리·직접 URL/SQL·이력·그림·PDF·명시 이관 |
@@ -29,7 +31,11 @@
 | TCI 점수·기준·유형 | [TCI#scores](ssot/05-tci.md#scores) | `tci_web/scores.py`, `views.py`, `static/app.js` | 자동 본문·그래프·저장·재열기 영향 |
 | TCI 자동 본문·추가·편집·자료 | [TCI#composition](ssot/05-tci.md#composition), [TCI#library](ssot/05-tci.md#library) | `type_report.py`, `type_workspace.py`, `composition.py`, `candidates.py` (`tci_web/`) | 서명·출처·직접 비운 본문·기존 자료 보존 |
 | TCI 목록·빠른 리뷰 | [TCI#dashboard](ssot/05-tci.md#dashboard) | `tci_web/views.py`, `templates/tci_dashboard.html` | 소유/공유 필터·검사 이력 영향 |
-| 통합 대시보드 개인 일정 | [계정·공유 SSOT](ssot/07-account-sharing.md) | `views.py:portal/save_appointment`, `templates/schedule_panel.html` | 일정 owner·접근 가능한 연결 검사·공유 회수 후 메타 숨김 |
+| 스케줄러·일정 공유·댓글 | [스케줄러 계약](ssot/08-people-scheduler.md#schedule) | `tci_web/scheduler.py`, `scheduler_schema.py`, `templates/scheduler/` | 소유권·연결 검사 별도 권한·소요 시간·개정 충돌·실패 복구 |
+| 검사 대상자 재선택·비노출 연결·저장 실패 복구 | [후속 보완 계약](ssot/08-people-scheduler.md#recovery-fixes) | `tci_web/schedule_links.py`, `scheduler.py`, `views.py`, `khtp_web/__init__.py` | 같은 저장 트랜잭션·입력/개정 보존·응답 사본·[패치 결과](changes/platform.md#plat-20261029-02) |
+| 작성 계정 전환·검사 댓글 복구·검색 키보드 | [추가 보완 계약](ssot/08-people-scheduler.md#account-draft-recovery) | `khtp_web/__init__.py`, `static/khtp.js`, `tci_web/collaboration.py`, `static/people.js` | 초안/파일·CSRF 갱신·재시도 권한·키보드 제출·[패치 결과](changes/platform.md#plat-20261029-03) |
+| 대상자 코드·검색·병합 | [대상자 계약](ssot/08-people-scheduler.md#identity) | `tci_web/people.py`, `db.py`, `templates/people/` | 같은 소유자·순번·병합 확인·원문 보존·양쪽 검사/일정 개정 |
+| 회원 관리·기능 스위치 | [관리 계약](ssot/08-people-scheduler.md#management) | `tci_web/admin.py`, `auth.py`, `templates/admin.html` | 관리자·세션 무효화·모든 기능 진입 차단·개인 권한 우회 금지 |
 | TCI PDF | [TCI#pdf](ssot/05-tci.md#pdf) | `tci_web/pdf_export.py`, `final_report.py`, `templates/report_pdf.html` | 저장 사본·출력 옵션·공유 렌더러 영향 |
 | K-HTP 그림·관찰·모델 | [K-HTP#workspace](ssot/06-khtp.md#workspace), [K-HTP#analysis](ssot/06-khtp.md#analysis) | `khtp_web/__init__.py`, `domain.py`, `worker.py` | 후보 정의·모델 자산·수정 보존 영향 |
 | K-HTP 기록·저장·PDF | [K-HTP#records](ssot/06-khtp.md#records), [K-HTP#pdf](ssot/06-khtp.md#pdf) | `khtp_web/__init__.py`, `static/khtp.js`, `templates/khtp/` | 개정 충돌·소유권·이관·공유 렌더러 영향 |
@@ -43,8 +49,8 @@
 
 | 구분 | 계약 소유 문서 | 수정·패치 기록 | 경계 |
 |---|---|---|---|
-| 공통 기반 PLAT | [공통 기반 SSOT](ssot/04-platform.md) | [공통 변경 대장](changes/platform.md) | 통합 대시보드·인증·공용 UI·통합 이력 |
-| TCI | [TCI SSOT](ssot/05-tci.md) | [TCI 변경 대장](changes/tci.md) | TCI 점수·자료·본문·일정·출력 |
+| 공통 기반 PLAT | [공통 기반 SSOT](ssot/04-platform.md), [대상자·스케줄러 SSOT](ssot/08-people-scheduler.md) | [공통 변경 대장](changes/platform.md) | 대시보드·인증·공용 UI·대상자·일정·통합 이력·관리 |
+| TCI | [TCI SSOT](ssot/05-tci.md) | [TCI 변경 대장](changes/tci.md) | TCI 점수·자료·본문·일정 연결·출력 |
 | KHTP | [K-HTP SSOT](ssot/06-khtp.md) | [K-HTP 변경 대장](changes/khtp.md) | K-HTP 그림·관찰·기록·출력 |
 
 문서/모듈 소유권은 계약의 담당 위치를 뜻하며 개인별 쓰기 권한이나 계정 권한을 뜻하지 않는다. `tci_web/` 내부에도 공통 인증·공유 PDF 렌더러·통합 이력이 있으므로 폴더 이름만 보고 TCI 전용으로 판단하지 않는다.

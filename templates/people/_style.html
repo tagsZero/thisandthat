@@ -1,0 +1,30 @@
+<style>
+.people-page { max-width: 1040px; }
+.people-heading, .people-actions, .people-pagination { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.people-heading { justify-content: space-between; margin-bottom: 24px; }
+.people-heading h1 { font-size: 27px; }
+.people-stack { display: flex; flex-direction: column; gap: 20px; }
+.people-box { padding: 24px; }
+.people-box h2 { margin-bottom: 14px; }
+.people-facts { display: flex; flex-wrap: wrap; gap: 20px 36px; margin: 0; }
+.people-facts div { min-width: 130px; }
+.people-facts dt { color: var(--muted); font-size: 12px; }
+.people-facts dd { margin: 3px 0 0; overflow-wrap: anywhere; }
+.people-list { padding: 0; margin: 0; list-style: none; }
+.people-list li + li { border-top: 1px solid var(--line); }
+.people-list a { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 16px 0; }
+.people-list a:hover { color: var(--accent); }
+.people-list .people-record-title { min-width: 0; overflow-wrap: anywhere; }
+.people-list small { display: block; color: var(--muted); }
+.people-list .people-kind { color: var(--muted); font-size: 12px; flex-shrink: 0; }
+.people-note { background: var(--sage); border-radius: 6px; padding: 14px 18px; }
+.people-search { display: flex; gap: 10px; margin: 16px 0; }
+.people-search input { min-width: 0; }
+.people-merge-pair { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px; }
+.people-merge-pair > div { flex: 1 1 240px; border: 1px solid var(--line); border-radius: 8px; padding: 18px; overflow-wrap: anywhere; }
+.people-merge-pair h3 { margin-bottom: 8px; }
+.people-merge-confirm { display: flex; align-items: flex-start; gap: 8px; margin: 20px 0; }
+.people-merge-confirm input { width: 18px; min-height: 18px; margin-top: 3px; flex-shrink: 0; }
+.people-pagination { justify-content: center; }
+@media (max-width: 600px) { .people-box { padding: 18px; } .people-heading h1 { font-size: 23px; } .people-list a { gap: 10px; } }
+</style>

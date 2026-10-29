@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}{{ person.name or person.reference }} · 대상자 이력{% endblock %}
+{% block extra_head %}{% include 'people/_style.html' %}{% endblock %}
+{% block content %}
+<main class="page people-page">
+  <a class="breadcrumb" href="{{ url_for('web.portal') }}">대시보드로</a>
+  <div class="people-heading">
+    <div><p class="eyebrow">code:{{ '%04d'|format(person.code) }}</p><h1>{{ person.name or '이름 미입력' }}</h1></div>
+    <div class="people-actions"><a class="button secondary small" href="{{ url_for('people.merge', person_id=person.id) }}">중복 대상자 병합</a></div>
+  </div>
+  <div class="people-stack">
+    {% if original.id != person.id %}<p class="people-note">code:{{ '%04d'|format(original.code) }}는 이 대상자로 병합되었습니다. 기존 검사 내용은 보존됩니다.</p>{% endif %}
+    <section class="panel people-box" aria-labelledby="person-info-title">
+      <h2 id="person-info-title">대상자 정보</h2>
+      <dl class="people-facts">
+        <div><dt>대상자 코드</dt><dd>code:{{ '%04d'|format(person.code) }}</dd></div>
+        <div><dt>등록 관리번호</dt><dd>{{ person.reference or '미입력' }}</dd></div>
+        <div><dt>최초 등록일</dt><dd>{{ person.registered_on }}</dd></div>
+      </dl>
+      {% if aliases %}<p class="muted" style="margin-top: 18px">병합된 코드: {% for alias in aliases %}{{ '%04d'|format(alias.code) }}{% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+    </section>
+    <section class="panel people-box" aria-labelledby="person-history-title">
+      <h2 id="person-history-title">검사·일정 이력 <span class="count">{{ total }}</span></h2>
+      {% if records %}<ul class="people-list">
+      {% for record in records %}
+        <li><a href="{% if record.kind == 'schedule' %}{{ url_for('scheduler.detail', event_id=record.id) }}{% else %}{{ url_for('collaboration.detail', kind=record.kind, exam_id=record.id) }}{% endif %}">
+          <span class="people-record-title">{{ record.title or '이름 미입력' }}<small>{{ record.day or '날짜 미입력' }}{% if record.reference %} · {{ record.reference }}{% endif %}</small></span>
+          <span class="people-kind">{{ {'tci':'TCI', 'khtp':'K-HTP', 'schedule':'일정'}[record.kind] }} · 열기</span>
+        </a></li>
+      {% endfor %}
+      </ul>{% else %}<p class="muted">연결된 검사·일정이 없습니다. 검사 작성 시 이 대상자를 선택하면 이곳에 이어집니다.</p>{% endif %}
+    </section>
+    {% if pages > 1 %}<nav class="people-pagination" aria-label="대상자 이력 페이지">
+      {% if page > 1 %}<a class="button secondary small" href="{{ url_for('people.detail', person_id=person.id, page=page-1) }}">이전</a>{% endif %}
+      <span>{{ page }} / {{ pages }}</span>
+      {% if page < pages %}<a class="button secondary small" href="{{ url_for('people.detail', person_id=person.id, page=page+1) }}">다음</a>{% endif %}
+    </nav>{% endif %}
+  </div>
+</main>
+{% endblock %}

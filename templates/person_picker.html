@@ -1,0 +1,16 @@
+{% macro person_picker(person=None, prefix='person', name_selector='', reference_selector='', reset_label='새 대상자', create_hint=True) -%}
+<div class="person-picker" id="{{ prefix }}-person-picker" data-person-picker data-name-selector="{{ name_selector }}" data-reference-selector="{{ reference_selector }}">
+  <input type="hidden" name="person_id" id="{{ prefix }}-person_id" value="{{ person.id if person else '' }}">
+  <div class="person-picker-current">
+    <span data-person-current>{% if person %}code:{{ person.code }} · {{ person.name or person.reference }}{% else %}{{ '새 대상자' if create_hint else '대상자 연결 없음' }}{% endif %}</span>
+    <a data-person-detail {% if person %}href="/people/{{ person.id }}"{% else %}hidden{% endif %}>대상자 이력</a>
+    <button class="button small" type="button" data-person-reset {% if not person %}hidden{% endif %}>{{ reset_label }}</button>
+  </div>
+  <label for="{{ prefix }}-person-search">등록된 대상자 찾기
+    <input id="{{ prefix }}-person-search" type="search" maxlength="100" placeholder="코드·이름·관리번호" autocomplete="off" data-person-search aria-controls="{{ prefix }}-person-results">
+  </label>
+  <p class="muted person-picker-hint" data-person-hint>{{ '처음 입력하는 사람은 저장할 때 코드가 생깁니다. 이름이 같아도 자동으로 합치지 않습니다.' if create_hint else '연결할 사람이 있을 때만 검색해서 선택하세요.' }}</p>
+  <p class="person-picker-status" role="status" aria-live="polite" data-person-status></p>
+  <ul class="person-picker-results" id="{{ prefix }}-person-results" data-person-results hidden></ul>
+</div>
+{%- endmacro %}
